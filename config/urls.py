@@ -22,28 +22,17 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # ============================================
-    # APP URLs - Include all app-specific routes
-    # ============================================
-    
-    # Core app (homepage, dashboard, about)
     path('', include('apps.core.urls')),
     
-    # User authentication (login, register, profile)
     path('users/', include('apps.users.urls')),
     
-    # Expense management
     path('expenses/', include('apps.expenses.urls')),
-    
-    # Category management
-    # path('categories/', include('apps.categories.urls')),
-    
-    # Budget management
+    path('categories/', include('apps.categories.urls')),
     # path('budgets/', include('apps.budgets.urls')),
-    
-    # AI processing features
-    # path('ai/', include('apps.ai_services.urls')),
-    
-    # Analytics and reports
+    # path('ai/', include('apps.ai_processing.urls')),
     # path('analytics/', include('apps.analytics.urls')),
+    path('budgets/', include('apps.budgets.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -11,51 +11,37 @@
         </div>
     </div>
     
+    {% if error_message %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> {{ error_message }}
+    </div>
+    {% endif %}
+    
     <!-- Summary Cards -->
     <div class="row mb-4">
-        <!-- Total Spent -->
         <div class="col-md-4 mb-3">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Total Spent</h6>
-                            <h2 class="card-title mb-0">${{ total_spent|floatformat:2 }}</h2>
-                        </div>
-                        <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
-                    </div>
+                    <h6 class="card-subtitle mb-2">Total Spent</h6>
+                    <h2 class="card-title">${{ total_spent|floatformat:2 }}</h2>
                 </div>
             </div>
         </div>
         
-        <!-- Expense Count -->
         <div class="col-md-4 mb-3">
             <div class="card bg-success text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Transactions</h6>
-                            <h2 class="card-title mb-0">{{ expense_count }}</h2>
-                        </div>
-                        <i class="fas fa-receipt fa-3x opacity-50"></i>
-                    </div>
+                    <h6 class="card-subtitle mb-2">Transactions</h6>
+                    <h2 class="card-title">{{ expense_count }}</h2>
                 </div>
             </div>
         </div>
         
-        <!-- Average per Transaction -->
         <div class="col-md-4 mb-3">
             <div class="card bg-info text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Avg. Transaction</h6>
-                            <h2 class="card-title mb-0">
-                                ${% if expense_count > 0 %}{{ total_spent|div:expense_count|floatformat:2 }}{% else %}0.00{% endif %}
-                            </h2>
-                        </div>
-                        <i class="fas fa-calculator fa-3x opacity-50"></i>
-                    </div>
+                    <h6 class="card-subtitle mb-2">Categories</h6>
+                    <h2 class="card-title">{{ user.categories.count }}</h2>
                 </div>
             </div>
         </div>
@@ -71,14 +57,14 @@
                         <a href="{% url 'expenses:create' %}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Expense
                         </a>
-                        <a href="{% url 'expenses:receipt_upload' %}" class="btn btn-secondary">
-                            <i class="fas fa-camera"></i> Upload Receipt
-                        </a>
-                        <a href="{% url 'expenses:voice_input' %}" class="btn btn-info">
-                            <i class="fas fa-microphone"></i> Voice Input
+                        <a href="{% url 'expenses:list' %}" class="btn btn-secondary">
+                            <i class="fas fa-list"></i> View All Expenses
                         </a>
                         <a href="{% url 'budgets:create' %}" class="btn btn-success">
                             <i class="fas fa-coins"></i> Set Budget
+                        </a>
+                        <a href="{% url 'categories:list' %}" class="btn btn-info">
+                            <i class="fas fa-tags"></i> Manage Categories
                         </a>
                     </div>
                 </div>
@@ -90,34 +76,32 @@
         <!-- Recent Expenses -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header">
                     <h5 class="mb-0">Recent Expenses</h5>
-                    <a href="{% url 'expenses:list' %}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     {% if recent_expenses %}
-                        <div class="list-group">
+                        <div class="list-group list-group-flush">
                             {% for expense in recent_expenses %}
                                 <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex justify-content-between">
                                         <div>
-                                            <strong>{{ expense.merchant_name }}</strong>
-                                            <br>
+                                            <strong>{{ expense.merchant_name|default:"Expense" }}</strong><br>
                                             <small class="text-muted">{{ expense.expense_date }}</small>
                                         </div>
                                         <div class="text-end">
-                                            <strong>${{ expense.amount }}</strong>
-                                            <br>
-                                            <span class="badge" style="background-color: {{ expense.category.color }}">
-                                                {{ expense.category.icon }} {{ expense.category.category_name }}
-                                            </span>
+                                            <strong>${{ expense.amount }}</strong><br>
+                                            <small>{{ expense.category.category_name }}</small>
                                         </div>
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'expenses:list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
                     {% else %}
-                        <p class="text-muted">No expenses yet. Start tracking!</p>
+                        <p class="text-muted text-center">No expenses yet. <a href="{% url 'expenses:create' %}">Add your first expense!</a></p>
                     {% endif %}
                 </div>
             </div>
@@ -126,75 +110,34 @@
         <!-- Budget Status -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header">
                     <h5 class="mb-0">Budget Status</h5>
-                    <a href="{% url 'budgets:list' %}" class="btn btn-sm btn-outline-primary">Manage</a>
                 </div>
                 <div class="card-body">
                     {% if budget_status %}
                         {% for item in budget_status %}
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
-                                    <span>{{ item.budget.category.icon }} {{ item.budget.category.category_name }}</span>
+                                    <span>{{ item.budget.category.category_name }}</span>
                                     <span>${{ item.spent|floatformat:2 }} / ${{ item.budget.budget_limit|floatformat:2 }}</span>
                                 </div>
-                                <div class="progress" style="height: 25px;">
+                                <div class="progress">
                                     <div class="progress-bar bg-{{ item.status }}" 
-                                         role="progressbar" 
-                                         style="width: {{ item.percentage }}%"
-                                         aria-valuenow="{{ item.percentage }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
+                                         style="width: {{ item.percentage }}%">
                                         {{ item.percentage }}%
                                     </div>
                                 </div>
                             </div>
                         {% endfor %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'budgets:list' %}" class="btn btn-sm btn-outline-primary">Manage Budgets</a>
+                        </div>
                     {% else %}
-                        <p class="text-muted">No budgets set. Create one to start tracking!</p>
+                        <p class="text-muted text-center">No budgets set. <a href="{% url 'budgets:create' %}">Create your first budget!</a></p>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Spending by Category -->
-    {% if spending_by_category %}
-    <div class="row mb-4">
-        <div class="col">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Spending by Category</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Transactions</th>
-                                    <th class="text-end">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in spending_by_category %}
-                                    <tr>
-                                        <td>
-                                            <span class="badge" style="background-color: {{ item.category__color }}">
-                                                {{ item.category__icon }} {{ item.category__category_name }}
-                                            </span>
-                                        </td>
-                                        <td>{{ item.count }}</td>
-                                        <td class="text-end"><strong>${{ item.total|floatformat:2 }}</strong></td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
