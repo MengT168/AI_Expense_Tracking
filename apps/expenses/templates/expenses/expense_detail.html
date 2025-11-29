@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Expense Details</h3>
+    <p><strong>Merchant:</strong> {{ expense.merchant_name }}</p>
+    <p><strong>Amount:</strong> ${{ expense.amount }}</p>
+    <a href="{% url 'expenses:list' %}" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

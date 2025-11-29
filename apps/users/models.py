@@ -1,8 +1,24 @@
+import pytz
+import pycountry
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
+ALL_TIMEZONES = sorted([(tz, tz) for tz in pytz.common_timezones])
+
+# Get all currencies (e.g., 'USD', 'KHR')
+# Format: [('USD', 'USD - US Dollar'), ('KHR', 'KHR - Riel'), ...]
+ALL_CURRENCIES = []
+for currency in pycountry.currencies:
+    # Some currencies don't have a name, so we handle that safely
+    name = getattr(currency, 'name', currency.alpha_3)
+    label = f"{currency.alpha_3} - {name}"
+    ALL_CURRENCIES.append((currency.alpha_3, label))
+
+# Sort currencies alphabetically
+ALL_CURRENCIES = sorted(ALL_CURRENCIES, key=lambda x: x[1])
 
 class User(AbstractUser):
     """

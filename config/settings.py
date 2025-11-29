@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-68jv2s_xwiwk+&4-_5$y+27qc3bja9fg1#5*9g46so0hz0e76z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.3.29','localhost', '127.0.0.1']
 
 
 # Application definition
@@ -87,7 +87,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
         },
-    },
+    },  
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'

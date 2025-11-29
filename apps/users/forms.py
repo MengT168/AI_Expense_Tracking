@@ -87,7 +87,12 @@ class UserPreferenceForm(forms.ModelForm):
         model = UserPreference
         fields = ['currency', 'date_format', 'timezone', 'ai_suggestions_enabled', 'voice_input_enabled']
         widgets = {
-            'currency': forms.Select(attrs={'class': 'form-control'}),
-            'date_format': forms.Select(attrs={'class': 'form-control'}),
-            'timezone': forms.Select(attrs={'class': 'form-control'}),
+            # 'form-select' makes the dropdown look good in Bootstrap 5
+            'currency': forms.Select(attrs={'class': 'form-select'}),
+            'date_format': forms.Select(attrs={'class': 'form-select'}),
+            'timezone': forms.Select(attrs={'class': 'form-select'}),
+            
+            # 'form-check-input' makes the checkboxes look like switches
+            'ai_suggestions_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'voice_input_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
         }

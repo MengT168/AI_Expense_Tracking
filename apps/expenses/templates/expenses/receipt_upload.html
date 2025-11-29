@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-camera"></i> Upload Receipt</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Upload a photo of your receipt. Our AI will automatically extract the merchant, date, items, and total amount.
+                    </p>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4 text-center">
+                            <div class="upload-area p-5 border rounded bg-light dashed-border">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <br>
+                                <label for="receipt_file" class="form-label h5 text-primary" style="cursor: pointer;">
+                                    Click to Select Receipt Image
+                                </label>
+                                <p class="small text-muted">Supported formats: JPG, PNG, JPEG</p>
+                                
+                                <input type="file" 
+                                       class="form-control mt-2" 
+                                       id="receipt_file" 
+                                       name="receipt_file" 
+                                       accept="image/*" 
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-magic"></i> Process Receipt with AI
+                            </button>
+                            <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3 shadow-sm">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-robot fa-2x"></i>
+                    </div>
+                    <div>
+                        <strong>Simulation Mode Active (Week 5):</strong><br>
+                        Uploading <em>any</em> image will trigger the <strong>Starbucks Receipt Simulation</strong>.
+                        <ul class="mb-0 ps-3 mt-1">
+                            <li><strong>Merchant:</strong> Starbucks Store #12345</li>
+                            <li><strong>Date:</strong> 2024-11-25</li>
+                            <li><strong>Amount:</strong> $12.45</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashed-border {
+        border: 2px dashed #dee2e6 !important;
+        transition: all 0.3s ease;
+    }
+    .dashed-border:hover {
+        border-color: #0d6efd !important;
+        background-color: #f8f9fa !important;
+    }
+</style>
+{% endblock %}

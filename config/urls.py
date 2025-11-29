@@ -28,8 +28,8 @@ urlpatterns = [
     
     path('expenses/', include('apps.expenses.urls')),
     path('categories/', include('apps.categories.urls')),
-    # path('budgets/', include('apps.budgets.urls')),
-    # path('ai/', include('apps.ai_processing.urls')),
+    path('budgets/', include('apps.budgets.urls')),
+    path('ai/', include('apps.ai_services.urls')),
     # path('analytics/', include('apps.analytics.urls')),
     path('budgets/', include('apps.budgets.urls')),
 ]

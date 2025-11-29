@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            
+            <!-- ENTRY METHOD TABS (Visualizing the 4 Options) -->
+            <ul class="nav nav-pills nav-fill mb-3 gap-2" id="entry-methods">
+                <li class="nav-item">
+                    <a class="nav-link active shadow-sm" href="#">
+                        <i class="fas fa-keyboard"></i> Manual
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link bg-white border" href="{% url 'expenses:receipt_upload' %}">
+                        <i class="fas fa-camera"></i> Receipt AI
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link bg-white border" href="{% url 'expenses:voice_input' %}">
+                        <i class="fas fa-microphone"></i> Voice
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link bg-white border" href="{% url 'expenses:text_parse' %}">
+                        <i class="fas fa-magic"></i> AI Text
+                    </a>
+                </li>
+            </ul>
+
+            <!-- THE MANUAL FORM -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice-dollar me-2"></i> 
+                        {% if form.instance.pk %}Edit Transaction #{{ form.instance.pk }}{% else %}New Transaction{% endif %}
+                    </h5>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Error Handling -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i> {{ form.non_field_errors.0 }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Row 1: Amount & Currency (Matches SQL: amount, currency) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Amount Spent</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text fw-bold">
+                                    {{ user.preferences.currency|default:"USD" }}
+                                </span>
+                                {{ form.amount }}
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="text-danger small mt-1">{{ form.amount.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Row 2: Date & Category (Matches SQL: expense_date, category_id) -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Date</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                    {{ form.expense_date }}
+                                </div>
+                                {% if form.expense_date.errors %}
+                                    <div class="text-danger small">{{ form.expense_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Category</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    {{ form.category }}
+                                </div>
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                                <div class="text-end">
+                                    <a href="{% url 'categories:list' %}" class="small text-decoration-none">
+                                        + New Category
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Merchant (Matches SQL: merchant_name) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Merchant / Payee</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-store"></i></span>
+                                {{ form.merchant_name }}
+                            </div>
+                            <div class="form-text">Who did you pay? (e.g., Olive Garden, Uber)</div>
+                            {% if form.merchant_name.errors %}
+                                <div class="text-danger small">{{ form.merchant_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Row 4: Payment Method (Matches SQL: payment_method) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Payment Method</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="far fa-credit-card"></i></span>
+                                {{ form.payment_method }}
+                            </div>
+                            <div class="form-text">e.g., Credit Card, Cash, Bank Transfer</div>
+                        </div>
+
+                        <!-- Row 5: Description (Matches SQL: description) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Notes / Description</label>
+                            {{ form.description }}
+                            <div class="form-text">Optional details (e.g., "Lunch with colleagues")</div>
+                        </div>
+
+                        <!-- Hidden Fields logic (handled by backend View) -->
+                        <!-- created_at, updated_at, entry_method='manual' are automatic -->
+
+                        <hr class="my-4">
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="fas fa-check-circle"></i> Save Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
 from .forms import UserRegistrationForm, UserLoginForm, UserProfileForm, UserPreferenceForm
-from .models import User
+from .models import User, UserPreference
 
 def register_view(request):
     """User registration view"""

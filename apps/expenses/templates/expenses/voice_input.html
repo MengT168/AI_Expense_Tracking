@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Voice Input - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-pills nav-fill mb-3 gap-2">
+                <li class="nav-item"><a class="nav-link bg-white border" href="{% url 'expenses:create' %}"><i class="fas fa-keyboard"></i> Manual</a></li>
+                <li class="nav-item"><a class="nav-link bg-white border" href="{% url 'expenses:receipt_upload' %}"><i class="fas fa-camera"></i> Receipt AI</a></li>
+                <li class="nav-item"><a class="nav-link active" href="#"><i class="fas fa-microphone"></i> Voice</a></li>
+                <li class="nav-item"><a class="nav-link bg-white border" href="{% url 'expenses:text_parse' %}"><i class="fas fa-magic"></i> AI Text</a></li>
+            </ul>
+
+            <div class="card shadow">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <div id="listening-indicator" class="spinner-grow text-danger d-none" role="status">
+                            <span class="visually-hidden">Listening...</span>
+                        </div>
+                        <i id="mic-icon" class="fas fa-microphone-alt text-secondary fa-5x mb-3"></i>
+                        <h4>Voice Entry</h4>
+                        <p class="text-muted">Tap the mic and say something like:<br><em>"Spent 15 dollars at Starbucks for coffee"</em></p>
+                    </div>
+
+                    <form method="post" id="voiceForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <textarea name="voice_text" id="voice_text" class="form-control" rows="3" placeholder="Your speech will appear here..."></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-danger btn-lg" onclick="toggleRecording()">
+                                <i class="fas fa-microphone"></i> <span id="btn-text">Start Recording</span>
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Process Text
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple Web Speech API Implementation
+    let recognition;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = function() {
+            document.getElementById('listening-indicator').classList.remove('d-none');
+            document.getElementById('mic-icon').classList.replace('text-secondary', 'text-danger');
+            document.getElementById('btn-text').innerText = "Stop Recording";
+            isRecording = true;
+        };
+
+        recognition.onend = function() {
+            document.getElementById('listening-indicator').classList.add('d-none');
+            document.getElementById('mic-icon').classList.replace('text-danger', 'text-secondary');
+            document.getElementById('btn-text').innerText = "Start Recording";
+            isRecording = false;
+        };
+
+        recognition.onresult = function(event) {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
+            }
+            document.getElementById('voice_text').value = transcript;
+        };
+    } else {
+        alert("Voice input is not supported in this browser. Please use Chrome.");
+    }
+
+    function toggleRecording() {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    }
+</script>
+{% endblock %}
