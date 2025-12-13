@@ -9,125 +9,128 @@
             
             <ul class="nav nav-pills nav-fill mb-4 gap-2 shadow-sm p-1 bg-white rounded-pill">
                 <li class="nav-item">
-                    <a class="nav-link active rounded-pill" href="#">
-                        <i class="fas fa-keyboard"></i> Manual
+                    <a class="nav-link active rounded-pill bg-primary text-white shadow-sm" href="#">
+                        <i class="fas fa-keyboard me-1"></i> Manual
                     </a>
                 </li>
 
                 {% if user.preferences.ai_suggestions_enabled %}
                 <li class="nav-item">
-                    <a class="nav-link rounded-pill" href="{% url 'expenses:receipt_upload' %}">
-                        <i class="fas fa-camera"></i> Receipt
+                    <a class="nav-link rounded-pill text-secondary" href="{% url 'expenses:receipt_upload' %}">
+                        <i class="fas fa-camera me-1"></i> Receipt
                     </a>
                 </li>
                 {% endif %}
                 
                 {% if user.preferences.voice_input_enabled %}
                 <li class="nav-item">
-                    <a class="nav-link rounded-pill" href="{% url 'expenses:voice_input' %}">
-                        <i class="fas fa-microphone"></i> Voice
+                    <a class="nav-link rounded-pill text-secondary" href="{% url 'expenses:voice_input' %}">
+                        <i class="fas fa-microphone me-1"></i> Voice
                     </a>
                 </li>
                 {% endif %}
 
                 {% if user.preferences.ai_suggestions_enabled %}
                 <li class="nav-item">
-                    <a class="nav-link rounded-pill" href="{% url 'expenses:text_parse' %}">
-                        <i class="fas fa-magic"></i> AI Text
+                    <a class="nav-link rounded-pill text-secondary" href="{% url 'expenses:text_parse' %}">
+                        <i class="fas fa-magic me-1"></i> Text
                     </a>
                 </li>
                 {% endif %}
             </ul>
 
-            <div class="card shadow-lg border-0 rounded-3">
-                <div class="card-header bg-primary text-white py-3">
-                    <h5 class="mb-0">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white py-3 border-0">
+                    <h5 class="mb-0 fw-bold">
                         <i class="fas fa-file-invoice-dollar me-2"></i> 
                         {% if form.instance.pk %}Edit Transaction #{{ form.instance.pk }}{% else %}New Transaction{% endif %}
                     </h5>
                 </div>
                 
-                <div class="card-body p-4">
+                <div class="card-body p-4 p-md-5">
                     <form method="post" novalidate>
                         {% csrf_token %}
                         
                         {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle"></i> {{ form.non_field_errors.0 }}
+                            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4">
+                                <i class="fas fa-exclamation-circle me-2"></i> {{ form.non_field_errors.0 }}
                             </div>
                         {% endif %}
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary text-uppercase small ls-1">Amount Spent</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light fw-bold text-primary">
+                            <label class="form-label fw-bold text-uppercase text-secondary small ls-1">Amount Spent</label>
+                            <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text bg-primary-subtle text-primary fw-bold border-0 px-3">
                                     {{ user.preferences.currency|default:"USD" }}
                                 </span>
                                 {{ form.amount }}
                             </div>
                             {% if form.amount.errors %}
-                                <div class="text-danger small mt-1">{{ form.amount.errors.0 }}</div>
+                                <div class="text-danger small mt-1 ps-1">{{ form.amount.errors.0 }}</div>
                             {% endif %}
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small">Date</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-white"><i class="far fa-calendar-alt text-muted"></i></span>
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="far fa-calendar-alt"></i></span>
                                     {{ form.expense_date }}
                                 </div>
                                 {% if form.expense_date.errors %}
                                     <div class="text-danger small">{{ form.expense_date.errors.0 }}</div>
                                 {% endif %}
                             </div>
+                            
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">Category</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold text-secondary small mb-0">Category</label>
+                                    <a href="{% url 'categories:list' %}" class="text-primary text-decoration-none small fw-bold">
+                                        <i class="fas fa-plus-circle"></i> New
+                                    </a>
+                                </div>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-white"><i class="fas fa-tag text-muted"></i></span>
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-tag"></i></span>
                                     {{ form.category }}
                                 </div>
                                 {% if form.category.errors %}
                                     <div class="text-danger small">{{ form.category.errors.0 }}</div>
                                 {% endif %}
-                                <div class="text-end mt-1">
-                                    <a href="{% url 'categories:list' %}" class="text-decoration-none small fw-bold">
-                                        <i class="fas fa-plus-circle"></i> New Category
-                                    </a>
-                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small">Merchant</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-white"><i class="fas fa-store text-muted"></i></span>
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-store"></i></span>
                                     {{ form.merchant_name }}
                                 </div>
+                                <div class="form-text small opacity-50">Ex: Starbucks, Uber</div>
                             </div>
+                            
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small">Payment Method</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-white"><i class="far fa-credit-card text-muted"></i></span>
+                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="far fa-credit-card"></i></span>
                                     {{ form.payment_method }}
                                 </div>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary small">Description</label>
+                            <label class="form-label fw-bold text-secondary small">Notes</label>
                             {{ form.description }}
                         </div>
 
-                        <hr class="my-4 text-muted opacity-25">
+                        <hr class="my-4 text-muted opacity-10">
 
                         <div class="d-flex justify-content-between align-items-center">
-                            <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary px-4">
+                            <a href="{% url 'expenses:list' %}" class="btn btn-light btn-lg px-4 text-muted fw-bold">
                                 Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
-                                <i class="fas fa-check-circle"></i> Save
+                            <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow fw-bold transition-transform">
+                                <i class="fas fa-check-circle me-2"></i> Save Expense
                             </button>
                         </div>
                     </form>
@@ -136,4 +139,24 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Custom Styling for clean inputs */
+    .bg-primary-subtle { background-color: #cfe2ff; }
+    .ls-1 { letter-spacing: 1px; }
+    .transition-transform:hover { transform: translateY(-2px); }
+    
+    /* Make inputs look cleaner (remove left border when icon is present) */
+    .input-group-text { background-color: #fff; }
+    .form-control { border-left: none; }
+    .form-control:focus { box-shadow: none; border-color: #dee2e6; }
+    .input-group:focus-within {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        border-radius: 0.375rem;
+    }
+    .input-group:focus-within .form-control, 
+    .input-group:focus-within .input-group-text {
+        border-color: #86b7fe;
+    }
+</style>
 {% endblock %}

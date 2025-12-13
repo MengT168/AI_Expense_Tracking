@@ -4,163 +4,209 @@
 {% block title %}Dashboard - Expense Tracker{% endblock %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
+<div class="container py-4 mb-5">
     
     {% if error_message %}
-    <div class="alert alert-danger shadow-sm" role="alert">
-        <h4 class="alert-heading"><i class="fas fa-bug"></i> Dashboard Warning</h4>
-        <p>{{ error_message }}</p>
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 d-flex align-items-center mb-4 p-3 animate-slide-down" role="alert">
+        <div class="bg-white text-danger rounded-circle p-2 me-3 shadow-sm">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-0">System Alert</h6>
+            <p class="mb-0 small opacity-75">{{ error_message }}</p>
+        </div>
     </div>
     {% endif %}
 
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card bg-primary text-white shadow border-0">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase opacity-75 ls-1">Total Spent ({{ current_month }})</h6>
-                            <h1 class="display-4 fw-bold mb-0">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg rounded-5 overflow-hidden text-white position-relative hover-scale-subtle transition-all" 
+                 style="background: radial-gradient(circle at top right, #4facfe 0%, #00f2fe 100%); min-height: 220px;">
+                
+                <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-10"></div>
+                
+                <div class="position-absolute top-0 end-0 opacity-25 p-4">
+                    <i class="fas fa-chart-line fa-10x" style="transform: rotate(-10deg) translate(40px, -40px); filter: blur(2px);"></i>
+                </div>
+
+                <div class="card-body p-4 p-lg-5 position-relative z-1 d-flex flex-column justify-content-center">
+                    <div class="row align-items-end">
+                        <div class="col-lg-8">
+                            <span class="badge bg-white bg-opacity-25 backdrop-blur border border-white border-opacity-25 rounded-pill px-3 py-2 mb-3 fw-normal text-uppercase ls-1">
+                                <i class="far fa-calendar-alt me-2"></i> {{ current_month }} Overview
+                            </span>
+                            <h1 class="display-3 fw-bolder mb-1 text-shadow">
                                 {{ total_spent|currency_display:target_currency }}
                             </h1>
+                            <p class="mb-0 opacity-75 fw-light">Total spending this month</p>
                         </div>
-                        <div class="text-end opacity-75">
-                            <i class="fas fa-wallet fa-4x"></i>
+                        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                            <div class="d-inline-block bg-white bg-opacity-10 backdrop-blur rounded-4 p-3 border border-white border-opacity-10">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="text-start">
+                                        <div class="h4 fw-bold mb-0">{{ expense_count }}</div>
+                                        <div class="small opacity-75">Transactions</div>
+                                    </div>
+                                    <div class="vr bg-white opacity-50" style="height: 30px;"></div>
+                                    <a href="{% url 'expenses:create' %}" class="btn btn-white text-primary fw-bold rounded-pill px-4 shadow-sm hover-lift">
+                                        <i class="fas fa-plus me-1"></i> Add
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="mt-3">
-                        <span class="badge bg-white text-primary rounded-pill px-3 py-2">
-                            <i class="fas fa-receipt"></i> {{ expense_count }} Transactions
-                        </span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         
         <div class="col-lg-8">
             
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-chart-pie"></i> Top Categories</h5>
-                    <a href="{% url 'categories:list' %}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-cog"></i> Manage
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Spending Breakdown</h5>
+                        <p class="text-muted small mb-0">Where your money went</p>
+                    </div>
+                    
+                    <a href="{% url 'categories:list' %}" class="btn btn-sm btn-light rounded-pill px-3 py-2 fw-bold text-secondary shadow-sm hover-scale transition-all">
+                        <i class="fas fa-layer-group me-2 text-primary"></i> Manage Categories
                     </a>
                 </div>
                 
-                <div class="card-body">
+                <div class="card-body px-4 pb-4">
                     {% for cat in spending_by_category %}
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="h6 mb-0">
-                                <span class="badge me-2 rounded-circle p-2" style="background-color: {{ cat.color }}; width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center;">
-                                    {{ cat.icon }}
-                                </span>
-                                {{ cat.name }}
-                            </span>
-                            <span class="fw-bold">
-                                {{ cat.total|currency_display:target_currency }}
-                            </span>
+                    <div class="d-flex align-items-center mb-3 p-3 rounded-3 hover-bg-light transition-all cursor-pointer">
+                        <div class="icon-box me-3 shadow-sm" style="background-color: {{ cat.color }}; color: #fff;">
+                            {{ cat.icon }}
                         </div>
                         
-                        {% widthratio cat.total total_spent 100 as pct %}
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar" 
-                                 role="progressbar" 
-                                 style="width: {{ pct }}%; background-color: {{ cat.color }}"
-                                 aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-bold text-dark">{{ cat.name }}</span>
+                                <span class="fw-bold text-dark">{{ cat.total|currency_display:target_currency }}</span>
+                            </div>
+                            {% widthratio cat.total total_spent 100 as pct %}
+                            <div class="progress rounded-pill bg-light" style="height: 6px;">
+                                <div class="progress-bar rounded-pill" 
+                                     role="progressbar" 
+                                     style="width: {{ pct }}%; background-color: {{ cat.color }};" 
+                                     aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted" style="font-size: 0.7rem;">{{ cat.count }} transactions</small>
+                                <small class="text-muted" style="font-size: 0.7rem;">{{ pct }}% of total</small>
                             </div>
                         </div>
-                        <small class="text-muted">{{ cat.count }} transaction(s)</small>
                     </div>
                     {% empty %}
-                        <div class="text-center py-4">
-                            <p class="text-muted mb-3">No spending data for this month yet.</p>
-                            <a href="{% url 'categories:create' %}" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-plus"></i> Add Category
-                            </a>
+                        <div class="text-center py-5">
+                            <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                                <i class="fas fa-chart-pie fa-2x text-muted opacity-50"></i>
+                            </div>
+                            <p class="text-muted">No data available yet.</p>
                         </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-bullseye"></i> Active Budgets</h5>
-                    <a href="{% url 'budgets:list' %}" class="btn btn-sm btn-outline-primary">Manage</a>
-                </div>
-                <div class="card-body">
-                    {% for item in budget_status %}
-                    <div class="mb-3 border-bottom pb-3 last-no-border">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <strong>{{ item.budget.category.icon }} {{ item.budget.category.category_name }}</strong>
-                            <span class="badge bg-{{ item.status }}">
-                                {{ item.percentage }}% Used
-                            </span>
-                        </div>
+            <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+                <h5 class="fw-bold mb-0 text-dark">Active Budgets</h5>
+                
+                <a href="{% url 'budgets:list' %}" class="btn btn-sm btn-white text-secondary rounded-pill px-3 fw-bold shadow-sm hover-scale transition-all">
+                    <i class="fas fa-sliders-h me-2 text-primary"></i> Manage
+                </a>
+            </div>
+
+            <div class="row g-3">
+                {% for item in budget_status %}
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden hover-lift transition-all">
+                        <div class="position-absolute start-0 top-0 bottom-0" style="width: 5px; background-color: {% if item.status == 'Alert' %}#dc3545{% elif item.status == 'Warning' %}#ffc107{% else %}#198754{% endif %};"></div>
                         
-                        <div class="progress mb-2" style="height: 10px;">
-                            <div class="progress-bar bg-{{ item.status }}" 
-                                 style="width: {{ item.percentage }}%"
-                                 aria-valuenow="{{ item.percentage }}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="card-body ps-4">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-light rounded-circle p-2 text-dark">{{ item.budget.category.icon }}</div>
+                                    <span class="fw-bold">{{ item.budget.category.category_name }}</span>
+                                </div>
+                                <span class="badge rounded-pill bg-light text-dark border">{{ item.percentage|floatformat:0 }}%</span>
+                            </div>
+                            
+                            <h4 class="fw-bold mb-1">{{ item.remaining|currency_display:target_currency }}</h4>
+                            <small class="text-muted d-block mb-3">Remaining of {{ item.limit_display|currency_display:target_currency }}</small>
+                            
+                            <div class="progress rounded-pill" style="height: 6px;">
+                                <div class="progress-bar rounded-pill {% if item.percentage > 100 %}bg-danger{% elif item.percentage > 80 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     style="width: {{ item.percentage }}%"></div>
                             </div>
                         </div>
-                        
-                        <div class="d-flex justify-content-between small text-muted">
-                            <span>
-                                <strong>Spent:</strong> {{ item.spent|currency_display:target_currency }}
-                            </span>
-                            <span>
-                                <strong>Limit:</strong> {{ item.limit_display|currency_display:target_currency }}
-                            </span>
-                        </div>
                     </div>
-                    {% empty %}
-                        <div class="text-center py-4">
-                            <p class="text-muted mb-3">You haven't set any budgets for this month.</p>
-                            <a href="{% url 'budgets:create' %}" class="btn btn-outline-primary btn-sm">Create Budget</a>
-                        </div>
-                    {% endfor %}
                 </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-light">
+                        <p class="text-muted mb-2">Keep your spending in check.</p>
+                        <a href="{% url 'budgets:create' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4">Create a Budget</a>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
         </div>
 
         <div class="col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-history"></i> Recent Activity</h5>
-                    <a href="{% url 'expenses:list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 py-4 px-4">
+                    <h5 class="fw-bold mb-0">Recent Activity</h5>
                 </div>
-                <div class="list-group list-group-flush">
-                    {% for expense in recent_expenses %}
-                    <div class="list-group-item px-3 py-3">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1 text-truncate" style="max-width: 150px;">{{ expense.merchant_name }}</h6>
-                                <div class="small text-muted">
-                                    {{ expense.category.icon }} {{ expense.category.category_name }}
+                <div class="card-body px-0 pt-0">
+                    <div class="timeline px-4">
+                        {% for expense in recent_expenses %}
+                        <div class="timeline-item pb-4 position-relative">
+                            {% if not forloop.last %}
+                            <div class="timeline-line position-absolute bg-light" style="width: 2px; top: 40px; bottom: 0; left: 24px;"></div>
+                            {% endif %}
+                            
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm" 
+                                         style="width: 48px; height: 48px; background-color: #fff; border: 2px solid {{ expense.category.color }}30;">
+                                        <span style="font-size: 1.2rem;">{{ expense.category.icon }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex-grow-1 pt-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-0">{{ expense.merchant_name }}</h6>
+                                            <small class="text-muted">{{ expense.category.category_name }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold text-dark">
+                                                {% smart_convert expense.amount expense.currency request.user %}
+                                            </div>
+                                            <small class="text-muted" style="font-size: 0.7rem;">{{ expense.expense_date|date:"M d" }}</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <h6 class="fw-bold mb-0 text-success">
-                                    {% smart_convert expense.amount expense.currency request.user %}
-                                </h6>
-                                <small class="text-muted" style="font-size: 0.75rem;">
-                                    {{ expense.expense_date|user_date:request.user }}
-                                </small>
-                            </div>
                         </div>
+                        {% empty %}
+                        <div class="text-center py-5 px-4">
+                            <i class="fas fa-coffee fa-3x text-light mb-3"></i>
+                            <p class="text-muted">No recent activity found.</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <div class="text-center p-5">
-                        <i class="fas fa-coffee fa-2x text-muted mb-3"></i>
-                        <p class="text-muted">No recent activity.</p>
-                        <a href="{% url 'expenses:create' %}" class="btn btn-sm btn-primary mt-2">Add Expense</a>
-                    </div>
-                    {% endfor %}
+                </div>
+                <div class="card-footer bg-white border-0 text-center pb-4">
+                    <a href="{% url 'expenses:list' %}" class="btn btn-light rounded-pill px-4 fw-bold text-primary w-100">
+                        View Full History
+                    </a>
                 </div>
             </div>
         </div>
@@ -169,12 +215,34 @@
 </div>
 
 <style>
-    .last-no-border:last-child {
-        border-bottom: 0 !important;
-        padding-bottom: 0 !important;
+    /* 1. HERO GRADIENT & SHADOWS */
+    .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .backdrop-blur { backdrop-filter: blur(8px); }
+    .ls-1 { letter-spacing: 1px; }
+    
+    /* 2. ICON BOXES */
+    .icon-box {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
     }
-    .ls-1 {
-        letter-spacing: 1px;
-    }
+
+    /* 3. HOVER EFFECTS */
+    .hover-scale:hover { transform: translateY(-2px); }
+    .hover-scale-subtle:hover { transform: scale(1.01); }
+    .hover-bg-light:hover { background-color: #f8f9fa; }
+    .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
+    .transition-all { transition: all 0.3s ease; }
+    .cursor-pointer { cursor: pointer; }
+
+    /* 4. TIMELINE STYLES */
+    .timeline { position: relative; }
+    /* The line logic is handled inline with HTML to handle the loop correctly */
+    
+    /* 5. UTILS */
+    .bg-opacity-10 { --bs-bg-opacity: 0.1; }
+    .bg-opacity-25 { --bs-bg-opacity: 0.25; }
+    .text-primary { color: #0d6efd !important; }
 </style>
 {% endblock %}

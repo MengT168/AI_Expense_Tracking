@@ -1,81 +1,133 @@
 {% extends 'base.html' %}
-{% load user_formatting %} {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-chart-pie"></i> All Budgets</h2>
-        <a href="{% url 'budgets:create' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Set New Budget
+{% load user_formatting %} 
+
+{% block title %}Budgets - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Budgets</h2>
+            <p class="text-muted mb-0">Monitor your spending limits</p>
+        </div>
+        <a href="{% url 'budgets:create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold hover-scale transition-all">
+            <i class="fas fa-plus me-2"></i> Set Budget
         </a>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         {% for item in budget_data %}
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm h-100 border-start border-5 
-                {% if item.percentage >= 100 %}border-danger
-                {% elif item.percentage >= 80 %}border-warning
-                {% else %}border-success{% endif %}
-                {% if item.status == 'Expired' %}opacity-75{% endif %}">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-lift transition-all position-relative overflow-hidden">
                 
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            {{ item.budget.category.icon }} {{ item.budget.category.category_name }}
-                        </h5>
-                        <span class="badge bg-{{ item.status_color }}">
+                <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background-color: {{ item.budget.category.color }};"></div>
+
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle me-3" 
+                                 style="width: 48px; height: 48px; background-color: {{ item.budget.category.color }}20; color: {{ item.budget.category.color }};">
+                                <span class="fs-4">{{ item.budget.category.icon }}</span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">{{ item.budget.category.category_name }}</h5>
+                                <span class="badge bg-light text-secondary border fw-normal mt-1">
+                                    {{ item.budget.get_period_type_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <span class="badge rounded-pill fw-bold px-3 py-2 
+                            {% if item.status == 'Active' %}bg-success-subtle text-success
+                            {% elif item.status == 'Expired' %}bg-secondary-subtle text-secondary
+                            {% else %}bg-warning-subtle text-warning{% endif %}">
                             {{ item.status }}
                         </span>
                     </div>
-                    
-                    <div class="text-muted small mt-1">
-                        {{ item.budget.start_date|user_date:request.user }} - {{ item.budget.end_date|user_date:request.user }}
-                        <span class="badge bg-light text-dark border">{{ item.budget.get_period_type_display }}</span>
-                    </div>
-                    
-                    <h3 class="mt-3">
-                        {% smart_convert item.spent 'USD' request.user %} 
-                        <small class="text-muted fs-6">/ {% smart_convert item.budget.budget_limit 'USD' request.user %}</small>
-                    </h3>
-                    
-                    <div class="progress mt-3" style="height: 20px;">
-                        <div class="progress-bar 
-                            {% if item.percentage >= 100 %}bg-danger
-                            {% elif item.percentage >= 80 %}bg-warning
-                            {% else %}bg-success{% endif %}" 
-                            role="progressbar" 
-                            style="width: {{ item.percentage|floatformat:0 }}%;" 
-                            aria-valuenow="{{ item.percentage }}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
-                            {{ item.percentage|floatformat:0 }}%
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-end mb-1">
+                            <h3 class="fw-bold mb-0 text-dark">
+                                {% smart_convert item.spent 'USD' request.user %}
+                            </h3>
+                            <small class="text-muted fw-bold mb-1">
+                                / {% smart_convert item.budget.budget_limit 'USD' request.user %}
+                            </small>
+                        </div>
+                        
+                        <div class="progress rounded-pill" style="height: 10px; background-color: #f0f2f5;">
+                            <div class="progress-bar rounded-pill 
+                                {% if item.percentage >= 100 %}bg-danger
+                                {% elif item.percentage >= 80 %}bg-warning
+                                {% else %}bg-primary{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ item.percentage }}%;" 
+                                aria-valuenow="{{ item.percentage }}" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-{% if item.percentage >= 100 %}danger{% else %}primary{% endif %} fw-bold">
+                                {{ item.percentage|floatformat:0 }}% Used
+                            </small>
+                            <small class="text-muted">
+                                {% if item.remaining > 0 %}
+                                    {{ item.remaining|currency_display:request.user.preferences.currency }} left
+                                {% else %}
+                                    Over budget
+                                {% endif %}
+                            </small>
                         </div>
                     </div>
 
-                    <div class="mt-3 d-flex justify-content-between text-muted small">
-                        <span>
-                            {% if item.remaining > 0 %}
-                                <i class="fas fa-check-circle text-success"></i> {% smart_convert item.remaining 'USD' request.user %} left
-                            {% else %}
-                                <i class="fas fa-exclamation-circle text-danger"></i> Over by {% smart_convert item.remaining|stringformat:"+d"|slice:"1:" 'USD' request.user %}
-                            {% endif %}
-                        </span>
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top border-light">
+                        <small class="text-muted">
+                            <i class="far fa-calendar-alt me-1"></i> 
+                            {{ item.budget.end_date|date:"M d, Y" }}
+                        </small>
+                        
+                        {% if item.is_alert and item.status == 'Active' %}
+                            <span class="text-danger small fw-bold animate-pulse">
+                                <i class="fas fa-exclamation-circle me-1"></i> Alert
+                            </span>
+                        {% endif %}
                     </div>
 
-                    {% if item.is_alert and item.status == 'Active' %}
-                    <div class="alert alert-warning mt-3 py-2 mb-0 text-center">
-                        <i class="fas fa-bell"></i> Threshold reached!
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <i class="fas fa-wallet fa-3x text-muted mb-3"></i>
-            <p class="text-muted">No budgets found.</p>
-            <a href="{% url 'budgets:create' %}" class="btn btn-outline-primary">Set First Budget</a>
+            <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                <i class="fas fa-wallet fa-3x text-muted opacity-50"></i>
+            </div>
+            <h4>No Budgets Set</h4>
+            <p class="text-muted">Create a budget to track your spending limits.</p>
+            <a href="{% url 'budgets:create' %}" class="btn btn-primary rounded-pill px-4 mt-2">
+                Set First Budget
+            </a>
         </div>
         {% endfor %}
     </div>
 </div>
+
+<style>
+    .bg-success-subtle { background-color: #d1e7dd; color: #0f5132; }
+    .bg-warning-subtle { background-color: #fff3cd; color: #664d03; }
+    .bg-secondary-subtle { background-color: #e2e3e5; color: #41464b; }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,.1) !important;
+    }
+    .hover-scale:hover { transform: scale(1.02); }
+    .transition-all { transition: all 0.3s ease; }
+    
+    @keyframes pulse-red {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    .animate-pulse { animation: pulse-red 2s infinite; }
+</style>
 {% endblock %}

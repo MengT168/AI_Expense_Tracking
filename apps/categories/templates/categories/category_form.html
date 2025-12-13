@@ -3,73 +3,82 @@
 {% block title %}{{ title }} - Expense Tracker{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
+        <div class="col-md-6 col-lg-5">
+            
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white py-3 border-0 text-center">
+                    <h5 class="mb-0 fw-bold">
                         {% if form.instance.pk %}
-                            <i class="fas fa-edit"></i> Edit Category
+                            <i class="fas fa-edit me-2"></i> Edit Category
                         {% else %}
-                            <i class="fas fa-plus-circle"></i> Add New Category
+                            <i class="fas fa-plus-circle me-2"></i> New Category
                         {% endif %}
-                    </h4>
+                    </h5>
                 </div>
-                <div class="card-body p-4">
+                
+                <div class="card-body p-4 p-md-5">
                     <form method="post">
                         {% csrf_token %}
                         
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Category Name</label>
-                            {{ form.category_name }}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Category Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
+                                {{ form.category_name }}
+                            </div>
                             {% if form.category_name.errors %}
-                                <div class="text-danger small">{{ form.category_name.errors.0 }}</div>
+                                <div class="text-danger small mt-1 ps-1">{{ form.category_name.errors.0 }}</div>
                             {% endif %}
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Icon (Emoji)</label>
-                                <div class="input-group">
-                                    <input type="text" 
-                                           name="icon" 
-                                           id="id_icon" 
-                                           class="form-control text-center fs-4" 
-                                           value="{{ form.icon.value|default:'📦' }}" 
-                                           readonly 
-                                           style="cursor: pointer; background-color: #fff;"
-                                           data-bs-toggle="modal" 
-                                           data-bs-target="#emojiModal">
-                                    
-                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#emojiModal">
-                                        Select
-                                    </button>
+                        <div class="row g-3 mb-4">
+                            
+                            <div class="col-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Icon</label>
+                                <div class="position-relative" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#emojiModal">
+                                    <div class="d-flex align-items-center justify-content-between form-control bg-white p-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <span id="icon-display" class="fs-4">{{ form.icon.value|default:'📦' }}</span>
+                                            </div>
+                                            <span class="small text-muted">Select</span>
+                                        </div>
+                                        <i class="fas fa-chevron-down text-muted small"></i>
+                                    </div>
+                                    <input type="hidden" name="icon" id="id_icon" value="{{ form.icon.value|default:'📦' }}">
                                 </div>
-                                <div class="form-text small">Click to select an icon</div>
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Color Code</label>
-                                <div class="input-group">
-                                    {{ form.color }}
+                            <div class="col-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Color</label>
+                                <div class="position-relative overflow-hidden rounded-3 border" style="height: 58px;">
                                     <input type="color" 
-                                           class="form-control form-control-color" 
+                                           class="form-control form-control-color position-absolute w-100 h-100 start-0 top-0 opacity-0" 
                                            id="color_visualizer" 
                                            value="{{ form.color.value|default:'#A8D8EA' }}" 
-                                           title="Choose your color"
-                                           onchange="document.getElementById('id_color').value = this.value">
+                                           style="cursor: pointer; z-index: 2;"
+                                           onchange="updateColor(this.value)">
+                                           
+                                    <div class="d-flex align-items-center h-100 px-3 position-relative" style="z-index: 1;">
+                                        <div id="color-preview-circle" class="rounded-circle border shadow-sm me-2" 
+                                             style="width: 24px; height: 24px; background-color: {{ form.color.value|default:'#A8D8EA' }};"></div>
+                                        <span id="color-code-text" class="small text-muted font-monospace">{{ form.color.value|default:'#A8D8EA' }}</span>
+                                    </div>
+                                    
+                                    {{ form.color }} 
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'categories:list' %}" class="btn btn-outline-secondary">
+                        <div class="d-grid gap-2 mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm fw-bold hover-scale transition-all">
+                                <i class="fas fa-check-circle me-2"></i> Save Category
+                            </button>
+                            <a href="{% url 'categories:list' %}" class="btn btn-light btn-lg rounded-pill fw-bold text-muted">
                                 Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="fas fa-save"></i> Save Category
-                            </button>
                         </div>
                     </form>
                 </div>
@@ -80,21 +89,20 @@
 
 <div class="modal fade" id="emojiModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Pick an Icon</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Pick an Icon</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <ul class="nav nav-pills mb-3 justify-content-center small" id="emojiTabs" role="tablist">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-general">General</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-food">Food</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-transport">Transport</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-bills">Bills</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-fun">Fun</button></li>
+                <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-pill" id="emojiTabs" role="tablist">
+                    <li class="nav-item"><button class="nav-link active rounded-pill small" data-bs-toggle="pill" data-bs-target="#tab-general">General</button></li>
+                    <li class="nav-item"><button class="nav-link rounded-pill small" data-bs-toggle="pill" data-bs-target="#tab-food">Food</button></li>
+                    <li class="nav-item"><button class="nav-link rounded-pill small" data-bs-toggle="pill" data-bs-target="#tab-transport">Auto</button></li>
+                    <li class="nav-item"><button class="nav-link rounded-pill small" data-bs-toggle="pill" data-bs-target="#tab-fun">Fun</button></li>
                 </ul>
 
-                <div class="tab-content text-center" id="emojiTabsContent">
+                <div class="tab-content text-center" id="emojiTabsContent" style="min-height: 200px;">
                     <div class="tab-pane fade show active" id="tab-general">
                         <div class="d-flex flex-wrap justify-content-center gap-2" id="emoji-grid-general"></div>
                     </div>
@@ -103,9 +111,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab-transport">
                         <div class="d-flex flex-wrap justify-content-center gap-2" id="emoji-grid-transport"></div>
-                    </div>
-                    <div class="tab-pane fade" id="tab-bills">
-                        <div class="d-flex flex-wrap justify-content-center gap-2" id="emoji-grid-bills"></div>
                     </div>
                     <div class="tab-pane fade" id="tab-fun">
                         <div class="d-flex flex-wrap justify-content-center gap-2" id="emoji-grid-fun"></div>
@@ -116,29 +121,46 @@
     </div>
 </div>
 
+<style>
+    /* Styling Updates */
+    .ls-1 { letter-spacing: 1px; }
+    .form-control { border-left: none; box-shadow: none !important; }
+    .input-group-text { background: white; }
+    .input-group:focus-within {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        border-radius: 0.375rem;
+    }
+    .input-group:focus-within .form-control, 
+    .input-group:focus-within .input-group-text {
+        border-color: #86b7fe;
+    }
+    .hover-scale:hover { transform: translateY(-2px); }
+    .transition-all { transition: all 0.2s ease; }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    // Update Color Visuals
+    function updateColor(color) {
+        document.getElementById('id_color').value = color; // Update hidden form input
+        document.getElementById('color-preview-circle').style.backgroundColor = color;
+        document.getElementById('color-code-text').innerText = color;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         
-        // 1. SYNC COLOR PICKER
-        // When typing in the text field, update the visual picker
-        const textInput = document.getElementById('id_color');
-        const colorPicker = document.getElementById('color_visualizer');
-        
-        if(textInput && colorPicker) {
-            textInput.addEventListener('input', function() {
-                colorPicker.value = this.value;
-            });
+        // 1. Initial Color Sync
+        const initialColor = document.getElementById('id_color').value;
+        if(initialColor) {
+            updateColor(initialColor);
         }
 
         // 2. DEFINE EMOJI LISTS
         const emojis = {
-            'general': ['📦', '💰', '💳', '🏦', '💵', '🪙', '💎', '🛒', '🛍️', '🎁', '🐶', '🐱', '👶', '🔧', '🧹'],
+            'general': ['📦', '💰', '💳', '🏦', '💵', '🪙', '💎', '🛒', '🛍️', '🎁', '🐶', '🐱', '👶', '🔧', '🧹', '🏠', '💡', '🔌', '🚰', '📱', '💻'],
             'food': ['🍔', '🍕', '🌭', '🍟', '🌮', '🥗', '🍣', '🍱', '🍜', '🍝', '🍞', '🥩', '🍗', '🍎', '🍌', '🍇', '☕', '🍵', '🥤', '🍺', '🍷', '🍹'],
-            'transport': ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛵', '🏍️', '🚲', '🛴', '✈️', '🚀', '🚁', '🚂', '🚆', '⛽'],
-            'bills': ['💡', '🔌', '🕯️', '🚰', '🚽', '🚿', '🛀', '📱', '📞', '📠', '💻', '🖥️', '🖨️', '📡', '🏠', '🏥', '💊', '🩺', '🎓'],
+            'transport': ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚜', '🛵', '🏍️', '🚲', '🛴', '✈️', '🚀', '⛽'],
             'fun': ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🎮', '🕹️', '🎲', '🎨', '🎬', '🎤', '🎧', '🎷', '🎸', '🎹', '🎺', '🎻', '🎫', '🎪']
         };
 
@@ -147,21 +169,20 @@
         
         function createEmojiButton(emoji) {
             const btn = document.createElement('button');
-            btn.className = 'btn btn-light btn-lg p-2 m-1 shadow-sm border';
-            btn.style.fontSize = '1.5rem';
+            btn.className = 'btn btn-light btn-lg p-2 m-1 shadow-sm border rounded-3 transition-all hover-scale';
+            btn.style.fontSize = '1.8rem';
             btn.innerText = emoji;
             btn.type = 'button';
             
             btn.onclick = function() {
-                // Set value to input
+                // Update Hidden Input & Visual Display
                 document.getElementById('id_icon').value = emoji;
-                // Close modal
+                document.getElementById('icon-display').innerText = emoji;
                 modal.hide();
             };
             return btn;
         }
 
-        // Loop through categories and fill grids
         for (const [category, list] of Object.entries(emojis)) {
             const container = document.getElementById(`emoji-grid-${category}`);
             if (container) {

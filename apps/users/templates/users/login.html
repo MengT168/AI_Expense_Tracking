@@ -3,68 +3,185 @@
 {% block title %}Login - Expense Tracker{% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0"><i class="fas fa-sign-in-alt"></i> Login</h3>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted text-center mb-4">Welcome back! Please login to your account.</p>
-                    
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <!-- Email Field -->
-                        <div class="mb-3">
-                            <label for="{{ form.username.id_for_label }}" class="form-label">
-                                <i class="fas fa-envelope"></i> Email Address
-                            </label>
-                            {{ form.username }}
-                            {% if form.username.errors %}
-                                <div class="text-danger small">{{ form.username.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Password Field -->
-                        <div class="mb-3">
-                            <label for="{{ form.password.id_for_label }}" class="form-label">
-                                <i class="fas fa-lock"></i> Password
-                            </label>
-                            {{ form.password }}
-                            {% if form.password.errors %}
-                                <div class="text-danger small">{{ form.password.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Remember Me -->
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe" name="remember">
-                            <label class="form-check-label" for="rememberMe">
-                                Remember me
-                            </label>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 py-2">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </button>
-                    </form>
-                    
-                    <div class="text-center mt-3">
-                        <a href="#" class="text-muted small text-decoration-none">Forgot password?</a>
+<div class="modern-login-bg min-vh-100 d-flex align-items-center justify-content-center p-4">
+    
+    <div class="card login-card border-0 shadow-lg overflow-hidden">
+        <div class="row g-0 h-100">
+            
+            <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-center align-items-center bg-primary text-white p-5 position-relative overflow-hidden">
+                <div class="shape-circle bg-white opacity-10"></div>
+                <div class="shape-blob bg-warning opacity-25"></div>
+                
+                <div class="position-relative z-2 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-wallet fa-4x animate-bounce"></i>
                     </div>
-                    
-                    <hr class="my-4">
-                    <p class="text-center mb-0">
-                        Don't have an account? 
-                        <a href="{% url 'users:register' %}" class="text-decoration-none">
-                            <strong>Register here</strong>
-                        </a>
+                    <h2 class="fw-bold">Smart Tracking</h2>
+                    <p class="opacity-75 small mt-2">
+                        "The art is not in making money, but in keeping it."
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-7 p-5 bg-white position-relative">
+                
+                <div class="d-lg-none text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle" style="width: 50px; height: 50px;">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                </div>
+
+                <h3 class="fw-bold mb-1 text-dark">Hello Again!</h3>
+                <p class="text-muted small mb-5">Welcome back to your financial dashboard.</p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger border-0 bg-danger-subtle text-danger small py-2 d-flex align-items-center mb-4">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            {{ form.non_field_errors.0 }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary text-uppercase ls-1">Email</label>
+                        <div class="input-group input-group-modern">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope text-muted"></i>
+                            </span>
+                            {{ form.username }}
+                        </div>
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary text-uppercase ls-1">Password</label>
+                        <div class="input-group input-group-modern">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock text-muted"></i>
+                            </span>
+                            {{ form.password }}
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="remember">
+                            <label class="form-check-label small text-muted" for="rememberMe">Keep me logged in</label>
+                        </div>
+                        <a href="#" class="small text-primary fw-bold text-decoration-none">Recovery?</a>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm btn-hover-effect">
+                            Login Account
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-5">
+                    <p class="text-muted small mb-0">
+                        New here? 
+                        <a href="{% url 'users:register' %}" class="text-primary fw-bold text-decoration-none">Create Account</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* 1. BACKGROUND */
+    .modern-login-bg {
+        background: #f3f4f6; /* Fallback */
+        background: radial-gradient(circle at top left, #e0e7ff, #f3f4f6);
+    }
+
+    /* 2. CARD STYLING */
+    .login-card {
+        width: 100%;
+        max-width: 900px;
+        min-height: 550px;
+        border-radius: 20px;
+    }
+
+    /* 3. MODERN INPUTS */
+    .input-group-modern {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .input-group-modern:focus-within {
+        background-color: #fff;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+    }
+
+    .input-group-modern .input-group-text {
+        background: transparent;
+        border: none;
+        padding-left: 1.2rem;
+    }
+
+    .input-group-modern .form-control {
+        background: transparent;
+        border: none;
+        padding: 0.8rem 1rem;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .input-group-modern .form-control:focus {
+        box-shadow: none; /* Remove default Bootstrap shadow */
+    }
+
+    /* 4. BUTTONS */
+    .btn-hover-effect {
+        transition: all 0.3s ease;
+        background-size: 200% auto;
+    }
+    .btn-hover-effect:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3) !important;
+    }
+
+    /* 5. DECORATIONS */
+    .shape-circle {
+        position: absolute;
+        top: -50px;
+        left: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+    }
+    .shape-blob {
+        position: absolute;
+        bottom: -50px;
+        right: -50px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+    .ls-1 { letter-spacing: 1px; }
+    .opacity-10 { opacity: 0.1; }
+    .z-2 { z-index: 2; }
+
+    /* Animation */
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    .animate-bounce {
+        animation: bounce 3s infinite ease-in-out;
+    }
+</style>
 {% endblock %}

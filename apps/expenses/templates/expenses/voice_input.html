@@ -4,55 +4,58 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
+        <div class="col-md-8 col-lg-6">
             
             <ul class="nav nav-pills nav-fill mb-4 gap-2 shadow-sm p-1 bg-white rounded-pill">
                 <li class="nav-item">
-                    <a class="nav-link rounded-pill" href="{% url 'expenses:create' %}"><i class="fas fa-keyboard"></i> Manual</a>
+                    <a class="nav-link rounded-pill text-secondary" href="{% url 'expenses:create' %}"><i class="fas fa-keyboard me-1"></i> Manual</a>
                 </li>
                 {% if user.preferences.ai_suggestions_enabled %}
                 <li class="nav-item">
-                    <a class="nav-link rounded-pill" href="{% url 'expenses:receipt_upload' %}"><i class="fas fa-camera"></i> Receipt</a>
+                    <a class="nav-link rounded-pill text-secondary" href="{% url 'expenses:receipt_upload' %}"><i class="fas fa-camera me-1"></i> Receipt</a>
                 </li>
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link active rounded-pill" href="#"><i class="fas fa-microphone"></i> Voice</a>
+                    <a class="nav-link active rounded-pill bg-danger text-white shadow-sm" href="#"><i class="fas fa-microphone me-1"></i> Voice</a>
                 </li>
                 {% if user.preferences.ai_suggestions_enabled %}
                 <li class="nav-item">
-                    <a class="nav-link rounded-pill" href="{% url 'expenses:text_parse' %}"><i class="fas fa-magic"></i> AI Text</a>
+                    <a class="nav-link rounded-pill text-secondary" href="{% url 'expenses:text_parse' %}"><i class="fas fa-magic me-1"></i> Text</a>
                 </li>
                 {% endif %}
             </ul>
 
-            <div class="card shadow-lg border-0 rounded-3">
+            <div class="card shadow-lg border-0 rounded-4">
                 <div class="card-body text-center p-5">
                     
-                    <div style="height: 120px;" class="d-flex align-items-center justify-content-center mb-3">
-                        <div id="mic-container" class="rounded-circle bg-light p-4 transition-all">
-                            <i id="mic-icon" class="fas fa-microphone-alt text-secondary fa-4x"></i>
+                    <div class="mb-4 d-flex justify-content-center">
+                        <div id="mic-container" class="mic-wrapper d-flex align-items-center justify-content-center bg-light rounded-circle">
+                            <i id="mic-icon" class="fas fa-microphone fa-3x text-secondary transition-all"></i>
                         </div>
                     </div>
 
-                    <h4 class="fw-bold">Voice Entry</h4>
+                    <h3 class="fw-bold mb-2">Voice Entry</h3>
                     <p class="text-muted mb-4">
-                        Tap the mic and say: <br>
-                        <span class="fst-italic text-primary">"Spent 15 dollars at Starbucks for coffee"</span>
+                        Tap the mic and speak naturally.<br>
+                        <span class="badge bg-light text-dark border mt-2 fw-normal">Example: "Lunch 15 dollars at Starbucks"</span>
                     </p>
 
                     <form method="post" id="voiceForm">
                         {% csrf_token %}
                         
-                        <div class="mb-3">
-                            <textarea name="voice_text" id="voice_text" class="form-control form-control-lg bg-light border-0 text-center" rows="2" placeholder="Listening..."></textarea>
+                        <div class="mb-4">
+                            <textarea name="voice_text" id="voice_text" 
+                                      class="form-control form-control-lg bg-light border-0 text-center rounded-3" 
+                                      rows="2" 
+                                      placeholder="Transcript will appear here..."></textarea>
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-outline-danger btn-lg rounded-pill" onclick="toggleRecording()">
-                                <i class="fas fa-circle"></i> <span id="btn-text">Start Recording</span>
+                        <div class="d-grid gap-3">
+                            <button type="button" id="recordBtn" class="btn btn-outline-danger btn-lg rounded-pill fw-bold" onclick="toggleRecording()">
+                                <i class="fas fa-microphone me-2"></i> <span>Start Recording</span>
                             </button>
-                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm">
-                                <i class="fas fa-check"></i> Save Expense
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                                <i class="fas fa-check me-2"></i> Save Expense
                             </button>
                         </div>
                     </form>
@@ -62,9 +65,46 @@
     </div>
 </div>
 
+<style>
+    /* Mic Wrapper Styles */
+    .mic-wrapper {
+        width: 120px;
+        height: 120px;
+        transition: all 0.3s ease;
+    }
+    .mic-recording {
+        background-color: #dc3545 !important; /* Red background */
+        color: white !important;
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        animation: pulse-red 1.5s infinite;
+    }
+    
+    .transition-all { transition: all 0.3s ease; }
+
+    /* Pulse Animation */
+    @keyframes pulse-red {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 20px rgba(220, 53, 69, 0);
+        }
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+</style>
+
 <script>
     let recognition;
     let isRecording = false;
+    const micContainer = document.getElementById('mic-container');
+    const micIcon = document.getElementById('mic-icon');
+    const recordBtn = document.getElementById('recordBtn');
+    const btnSpan = recordBtn.querySelector('span');
 
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
@@ -73,16 +113,28 @@
         recognition.lang = 'en-US';
 
         recognition.onstart = function() {
-            document.getElementById('mic-icon').className = 'fas fa-microphone-alt text-white fa-4x';
-            document.getElementById('mic-container').className = 'rounded-circle bg-danger p-4 shadow-lg'; // Red Pulse
-            document.getElementById('btn-text').innerText = "Stop Recording";
+            // Visual Update: Recording State
+            micContainer.classList.add('mic-recording'); // Start Pulse
+            micContainer.classList.remove('bg-light');
+            micIcon.classList.remove('text-secondary');
+            micIcon.classList.add('text-white');
+            
+            btnSpan.innerText = "Stop Recording";
+            recordBtn.classList.replace('btn-outline-danger', 'btn-danger');
+            
             isRecording = true;
         };
 
         recognition.onend = function() {
-            document.getElementById('mic-icon').className = 'fas fa-microphone-alt text-secondary fa-4x';
-            document.getElementById('mic-container').className = 'rounded-circle bg-light p-4';
-            document.getElementById('btn-text').innerText = "Start Recording";
+            // Visual Update: Idle State
+            micContainer.classList.remove('mic-recording'); // Stop Pulse
+            micContainer.classList.add('bg-light');
+            micIcon.classList.add('text-secondary');
+            micIcon.classList.remove('text-white');
+            
+            btnSpan.innerText = "Start Recording";
+            recordBtn.classList.replace('btn-danger', 'btn-outline-danger');
+            
             isRecording = false;
         };
 

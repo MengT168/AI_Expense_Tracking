@@ -3,84 +3,195 @@
 {% block title %}Welcome - AI Expense Tracker{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Hero Section -->
-    <div class="row min-vh-100 align-items-center">
-        <div class="col-lg-6">
-            <h1 class="display-3 fw-bold mb-4">
-                Track Your Expenses with <span class="text-primary">AI</span>
-            </h1>
-            <p class="lead mb-4">
-                Smart expense tracking powered by artificial intelligence. 
-                Upload receipts, use voice commands, or simply type naturally.
-            </p>
-            <div class="d-grid gap-2 d-md-flex">
-                <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg px-4">
-                    Get Started Free
-                </a>
-                <a href="{% url 'users:login' %}" class="btn btn-outline-primary btn-lg px-4">
-                    Login
-                </a>
+<div class="bg-light bg-gradient border-bottom">
+    <div class="container">
+        <div class="row min-vh-100 align-items-center py-5">
+            <div class="col-lg-6 order-lg-1 order-2">
+                <h1 class="display-3 fw-bold mb-4 lh-sm">
+                    Master Your Money with <span class="text-primary position-relative">AI
+                        <svg class="position-absolute start-0 bottom-0 w-100" height="10" viewBox="0 0 100 10" preserveAspectRatio="none" style="z-index: -1; opacity: 0.3;">
+                            <path d="M0 5 Q 50 10 100 5" stroke="#0d6efd" stroke-width="8" fill="none" />
+                        </svg>
+                    </span>
+                </h1>
+                <p class="lead text-secondary mb-5 fs-4">
+                    Stop typing manually. Upload receipts, use voice commands, or just chat naturally. 
+                    Our AI handles the categorization, math, and insights for you.
+                </p>
+                <div class="d-grid gap-3 d-md-flex justify-content-md-start">
+                    <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-sm fw-bold">
+                        <i class="fas fa-rocket me-2"></i> Get Started Free
+                    </a>
+                    <a href="{% url 'users:login' %}" class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill fw-bold">
+                        Login
+                    </a>
+                </div>
+                <div class="mt-4 text-muted small">
+                    <i class="fas fa-check-circle text-success me-1"></i> No credit card required
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-check-circle text-success me-1"></i> Free forever plan
+                </div>
             </div>
-        </div>
-        <div class="col-lg-6 text-center">
-            <i class="fas fa-wallet fa-10x text-primary"></i>
-        </div>
-    </div>
-    
-    <!-- Features Section -->
-    <div class="row py-5">
-        <div class="col-12 text-center mb-5">
-            <h2 class="display-5 fw-bold">Features</h2>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="text-center">
-                <i class="fas fa-camera fa-3x text-primary mb-3"></i>
-                <h4>Receipt Scanning</h4>
-                <p>Upload receipt photos and AI extracts all the details automatically.</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="text-center">
-                <i class="fas fa-microphone fa-3x text-primary mb-3"></i>
-                <h4>Voice Input</h4>
-                <p>Just say "I spent $50 on groceries" and it's tracked.</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="text-center">
-                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
-                <h4>Smart Insights</h4>
-                <p>AI analyzes your spending patterns and gives you insights.</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="text-center">
-                <i class="fas fa-robot fa-3x text-primary mb-3"></i>
-                <h4>Auto-Categorization</h4>
-                <p>AI automatically categorizes your expenses for you.</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="text-center">
-                <i class="fas fa-coins fa-3x text-primary mb-3"></i>
-                <h4>Budget Tracking</h4>
-                <p>Set budgets and get alerts when you're close to limits.</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="text-center">
-                <i class="fas fa-file-export fa-3x text-primary mb-3"></i>
-                <h4>Export Reports</h4>
-                <p>Export your data to CSV or PDF for tax purposes.</p>
+            <div class="col-lg-6 order-lg-2 order-1 text-center mb-5 mb-lg-0">
+                <div class="position-relative">
+                    <div class="bg-primary opacity-10 position-absolute top-50 start-50 translate-middle rounded-circle" style="width: 400px; height: 400px; filter: blur(60px); z-index: 0;"></div>
+                    <i class="fas fa-wallet text-primary position-relative floating-anim" style="font-size: 12rem; z-index: 1;"></i>
+                    
+                    <div class="card position-absolute top-0 end-0 shadow border-0 floating-anim-delayed" style="width: 180px; transform: rotate(5deg);">
+                        <div class="card-body p-2 d-flex align-items-center">
+                            <div class="bg-success text-white rounded-circle p-2 me-2">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div>
+                                <small class="d-block text-muted" style="font-size: 0.7rem;">Income</small>
+                                <strong>$3,250.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card position-absolute bottom-0 start-0 shadow border-0 floating-anim" style="width: 160px; transform: rotate(-5deg);">
+                        <div class="card-body p-2 d-flex align-items-center">
+                            <div class="bg-info text-white rounded-circle p-2 me-2">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div>
+                                <small class="d-block text-muted" style="font-size: 0.7rem;">Receipt Scan</small>
+                                <strong>Success</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container py-5 my-5">
+    <div class="text-center mb-5">
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 mb-3">POWERFUL FEATURES</span>
+        <h2 class="display-5 fw-bold">Everything you need to track spending</h2>
+        <p class="text-muted col-md-6 mx-auto">We combine advanced AI with simple design to make personal finance effortless.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-hover transition-all">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-4" style="width: 80px; height: 80px;">
+                        <i class="fas fa-camera fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Receipt OCR</h4>
+                    <p class="text-muted">Snap a photo of any receipt. Our AI instantly extracts the merchant, date, and total amount with high accuracy.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-hover transition-all">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-4" style="width: 80px; height: 80px;">
+                        <i class="fas fa-microphone fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Voice Input</h4>
+                    <p class="text-muted">On the go? Just say "Spent 15 dollars on coffee" and let our Natural Language Processing do the rest.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-hover transition-all">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-warning-subtle text-warning rounded-circle mb-4" style="width: 80px; height: 80px;">
+                        <i class="fas fa-robot fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Auto-Categorization</h4>
+                    <p class="text-muted">Stop sorting manually. We automatically detect if a transaction is Food, Transport, or Bills based on context.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-hover transition-all">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle mb-4" style="width: 80px; height: 80px;">
+                        <i class="fas fa-chart-pie fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Smart Insights</h4>
+                    <p class="text-muted">Get weekly summaries and predictions. "You spent 15% more on dining out this week."</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-hover transition-all">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-info-subtle text-info rounded-circle mb-4" style="width: 80px; height: 80px;">
+                        <i class="fas fa-coins fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Budget Alerts</h4>
+                    <p class="text-muted">Set monthly limits. We'll warn you the moment you cross 80% of your budget threshold.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-hover transition-all">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-dark-subtle text-dark rounded-circle mb-4" style="width: 80px; height: 80px;">
+                        <i class="fas fa-globe fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Multi-Currency</h4>
+                    <p class="text-muted">Travel often? Track expenses in USD, Riel, Euro, or Yen. We handle the conversion automatically.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="bg-primary text-white rounded-4 p-5 text-center position-relative overflow-hidden">
+        <div class="position-relative" style="z-index: 2;">
+            <h2 class="display-5 fw-bold mb-3">Ready to take control?</h2>
+            <p class="lead mb-4 opacity-75">Join thousands of users tracking their expenses smarter, not harder.</p>
+            <a href="{% url 'users:register' %}" class="btn btn-light btn-lg px-5 py-3 rounded-pill fw-bold text-primary shadow">
+                Create Free Account
+            </a>
+        </div>
+        <div class="position-absolute top-0 end-0 bg-white opacity-10 rounded-circle" style="width: 300px; height: 300px; margin-top: -100px; margin-right: -100px;"></div>
+        <div class="position-absolute bottom-0 start-0 bg-white opacity-10 rounded-circle" style="width: 200px; height: 200px; margin-bottom: -50px; margin-left: -50px;"></div>
+    </div>
+</div>
+
+<style>
+    /* Floating Animation for Hero Image */
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+    .floating-anim {
+        animation: float 6s ease-in-out infinite;
+    }
+    .floating-anim-delayed {
+        animation: float 6s ease-in-out infinite;
+        animation-delay: 3s;
+    }
+
+    /* Hover Effect for Cards */
+    .shadow-hover {
+        transition: all 0.3s ease;
+    }
+    .shadow-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    }
+    
+    /* Background Utilities */
+    .bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1); }
+    .bg-success-subtle { background-color: rgba(25, 135, 84, 0.1); }
+    .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1); }
+    .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1); }
+    .bg-info-subtle { background-color: rgba(13, 202, 240, 0.1); }
+    .bg-dark-subtle { background-color: rgba(33, 37, 41, 0.1); }
+</style>
 {% endblock %}

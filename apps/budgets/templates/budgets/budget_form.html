@@ -1,37 +1,78 @@
 {% extends 'base.html' %}
 
+{% block title %}Set Budget - Expense Tracker{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="fas fa-wallet"></i> Set New Budget</h4>
+        <div class="col-md-6 col-lg-5">
+            
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white py-3 border-0 text-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-bullseye me-2"></i> Set New Budget
+                    </h5>
                 </div>
-                <div class="card-body">
-                    <form method="post">
+                
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" novalidate>
                         {% csrf_token %}
                         
-                        {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">
-                                {{ field.label }}
-                            </label>
-                            {{ field }}
-                            {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Category</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
+                                {{ form.category }}
+                            </div>
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1 ps-1">{{ form.category.errors.0 }}</div>
                             {% endif %}
-                            {% for error in field.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
                         </div>
-                        {% endfor %}
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-save"></i> Save Budget
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Budget Limit</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-primary-subtle text-primary fw-bold border-0">
+                                    {{ user.preferences.currency|default:"USD" }}
+                                </span>
+                                {{ form.budget_limit }}
+                            </div>
+                            {% if form.budget_limit.errors %}
+                                <div class="text-danger small mt-1 ps-1">{{ form.budget_limit.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Duration</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-clock text-muted"></i></span>
+                                {{ form.period_type }}
+                            </div>
+                            {% if form.period_type.errors %}
+                                <div class="text-danger small mt-1 ps-1">{{ form.period_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase ls-1">Start Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="far fa-calendar-alt text-muted"></i></span>
+                                {{ form.start_date }}
+                            </div>
+                            {% if form.start_date.errors %}
+                                <div class="text-danger small mt-1 ps-1">{{ form.start_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <hr class="my-4 opacity-10">
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm fw-bold hover-scale transition-all">
+                                <i class="fas fa-check-circle me-2"></i> Save Budget
                             </button>
-                            <a href="{% url 'budgets:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                            <a href="{% url 'budgets:list' %}" class="btn btn-light btn-lg rounded-pill fw-bold text-muted">
+                                Cancel
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -39,4 +80,30 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Input Styling */
+    .ls-1 { letter-spacing: 1px; }
+    .bg-primary-subtle { background-color: #cfe2ff; }
+    
+    .form-control, .form-select {
+        border-left: none;
+        box-shadow: none !important;
+    }
+    .input-group-text { background-color: #fff; }
+    
+    /* Focus State */
+    .input-group:focus-within {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        border-radius: 0.375rem;
+    }
+    .input-group:focus-within .form-control, 
+    .input-group:focus-within .form-select,
+    .input-group:focus-within .input-group-text {
+        border-color: #86b7fe;
+    }
+
+    .hover-scale:hover { transform: translateY(-2px); }
+    .transition-all { transition: all 0.2s ease; }
+</style>
 {% endblock %}
