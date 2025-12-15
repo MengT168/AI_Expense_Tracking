@@ -10,7 +10,7 @@
                     <a class="nav-link rounded-pill" href="{% url 'expenses:create' %}"><i class="fas fa-keyboard"></i> Manual</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active rounded-pill" href="#"><i class="fas fa-camera"></i> Receipt</a>
+                    <a class="nav-link active rounded-pill" href="{% url 'expenses:receipt_upload' %}"><i class="fas fa-camera"></i> Receipt</a>
                 </li>
                 
                 {% if user.preferences.voice_input_enabled %}
@@ -45,7 +45,7 @@
                                 Choose Image File
                             </label>
                             <p class="small text-muted mb-0">JPG, PNG supported</p>
-                            <input type="file" class="form-control mt-3" id="receipt_file" name="receipt_file" accept="image/*" required>
+                            <input type="file" class="form-control mt-3" id="receipt_file" name="file" accept="image/*" required>
                         </div>
 
                         <div class="d-grid">

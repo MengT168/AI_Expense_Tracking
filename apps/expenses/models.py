@@ -38,14 +38,22 @@ class Expense(models.Model):
 
 class Receipt(models.Model):
     """Receipt attachments for expenses"""
-    expense = models.OneToOneField(Expense, on_delete=models.CASCADE, related_name='receipt')
+    # One-to-One link to the Expense created from the receipt. Null=True allows Receipt to exist 
+    # temporarily before the final Expense is created/confirmed via the review page.
+    expense = models.OneToOneField(
+            'Expense', 
+            on_delete=models.CASCADE, 
+            related_name='receipt_scan', 
+            null=True,           # <--- ADD THIS
+            blank=True           # <--- AND THIS
+        )    
     file = models.ImageField(upload_to='receipts/%Y/%m/')
-    file_type = models.CharField(max_length=50)
+    file_type = models.CharField(max_length=50, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    ocr_text = models.TextField(blank=True, null=True)
+    ocr_text = models.TextField(blank=True, null=True) # Raw text result from OCR
     
     class Meta:
         db_table = 'RECEIPT'
     
     def __str__(self):
-        return f"Receipt for {self.expense}"
+        return f"Receipt ID {self.pk} - Linked to Expense {self.expense_id or 'Unlinked'}"

@@ -1,9 +1,12 @@
-from django import forms
-from .models import Expense
-from apps.categories.models import Category
+# apps/expenses/forms.py
 
+from django import forms
+from .models import Expense, Receipt
+# Assuming 'apps.categories' is installed and its models are accessible
+from apps.categories.models import Category 
 
 class ExpenseForm(forms.ModelForm):
+    """Form used for manual entry and for reviewing/editing OCR data."""
     class Meta:
         model = Expense
         fields = ['category', 'amount', 'expense_date', 'merchant_name', 
@@ -18,9 +21,23 @@ class ExpenseForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        # Pop the user out of kwargs so we can filter categories
+        user = kwargs.pop('user', None) 
         super().__init__(*args, **kwargs)
-        # Filter categories for current user if instance exists
-        if 'instance' in kwargs and kwargs['instance'].pk:
-            self.fields['category'].queryset = Category.objects.filter(
-                user=kwargs['instance'].user
-            )
+        
+        # Filter categories for the current user
+        if user:
+            self.fields['category'].queryset = Category.objects.filter(user=user)
+        # Fallback to general queryset if filtering isn't strictly necessary or not possible
+        elif self.instance.pk:
+            self.fields['category'].queryset = Category.objects.filter(user=self.instance.user)
+
+
+class ReceiptUploadForm(forms.ModelForm):
+    """Form for uploading a receipt image."""
+    class Meta:
+        model = Receipt
+        fields = ['file']
+        widgets = {
+            'file': forms.FileInput(attrs={'id': 'receipt_file', 'accept': 'image/*'})
+        }

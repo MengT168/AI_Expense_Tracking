@@ -11,11 +11,15 @@ from django.urls import reverse
 from django.utils import timezone
 from django.db import transaction
 from apps.ai_services.utils import check_budget_alerts
-
+from .forms import ReceiptUploadForm, ExpenseForm # <-- ENSURE ExpenseForm is importedimport numpy as np
+from django.core.files.uploadedfile import UploadedFile  # <--- THIS IS THE FIX
+from django.conf import settings
+import os 
 from .models import Expense, Receipt
 from .forms import ExpenseForm
 from apps.categories.models import Category
 from apps.ai_services.models import AIExtraction 
+from .ocr_service import perform_receipt_ocr
 
 
 def _smart_extract(text, user):
@@ -291,3 +295,164 @@ def text_parse(request):
         return redirect('expenses:list')
         
     return render(request, 'expenses/text_parse.html')
+
+@login_required 
+def receipt_upload(request):
+    """Handles receipt image upload, saves the Receipt, and redirects to review."""
+    
+    # Use the form field name 'file' from the HTML template
+    if request.method == 'POST':
+            form = ReceiptUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                receipt = form.save(commit=False)
+                receipt.user = request.user
+                # !!! ERROR LINE (Original) !!!
+                receipt.file_type = receipt.file.content_type if receipt.file else 'unknown'
+                # ... rest of the logic
+                receipt.save() 
+            
+            # 2. Perform OCR and extract data
+            receipt_file_path = os.path.join(settings.MEDIA_ROOT, receipt.file.name)
+            try:
+                # Use the mock OCR service
+                ocr_data, raw_ocr_text = perform_receipt_ocr(receipt_file_path)
+                
+                # Update the receipt with the raw OCR text
+                receipt.ocr_text = raw_ocr_text
+                receipt.save()
+                
+            except Exception as e:
+                messages.error(request, f"OCR processing failed for the image. Error: {e}")
+                receipt.delete() # Clean up
+                return redirect('expenses:receipt_upload')
+
+            # Redirect to the review page
+            return redirect('expenses:review_receipt', pk=receipt.pk)
+            
+    else:
+            messages.error(request, "Please select a file to upload.")
+            
+    # GET request or failed POST
+    form = ReceiptUploadForm()
+    
+    return render(request, 'expenses/receipt_upload.html', {'form': form})
+@login_required 
+def receipt_upload(request):
+    """Handles receipt image upload, saves the Receipt, and redirects to review."""
+    
+    if request.method == 'POST':
+        form = ReceiptUploadForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            # Lines must be indented here (e.g., 4 spaces)
+            uploaded_file = request.FILES.get('file') 
+            
+            receipt = form.save(commit=False)
+            receipt.user = request.user
+            
+            # --- FIX APPLIED HERE (Now UploadedFile is defined) ---
+            if uploaded_file and isinstance(uploaded_file, UploadedFile): 
+                receipt.file_type = uploaded_file.content_type
+            else:
+                receipt.file_type = 'unknown' 
+            # ------------------------
+            
+            # Save the receipt instance to store the file and other fields
+            receipt.save() 
+            
+            # 2. Perform OCR and extract data
+            # NOTE: receipt.file.name is only available after receipt.save() is called
+            receipt_file_path = os.path.join(settings.MEDIA_ROOT, receipt.file.name)
+            
+            try:
+                # Use the mock OCR service
+                ocr_data, raw_ocr_text = perform_receipt_ocr(receipt_file_path)
+                
+                # Update the receipt with the raw OCR text
+                receipt.ocr_text = raw_ocr_text
+                receipt.save()
+                
+            except Exception as e:
+                messages.error(request, f"OCR processing failed for the image. Error: {e}")
+                # Clean up the object and the file saved on disk
+                receipt.delete() 
+                return redirect('expenses:receipt_upload')
+
+            # Redirect to the review page
+            return redirect('expenses:review_receipt', pk=receipt.pk)
+        
+    else:
+            # If form is NOT valid (e.g., file required but missing)
+            messages.error(request, "The file upload failed. Please check the form data.")
+            
+    # GET request or failed POST (non-valid form)
+    form = ReceiptUploadForm()
+    
+    return render(request, 'expenses/receipt_upload.html', {'form': form})
+@login_required 
+def receipt_review(request, pk):
+    """Allows user to review and confirm OCR-extracted data using ExpenseForm."""
+    
+    # Get the Receipt object that is not yet linked to an Expense
+    receipt = get_object_or_404(Receipt, pk=pk, expense__isnull=True) 
+
+    # Re-run OCR data retrieval for pre-filling the form (in a real app, you'd parse 
+    # the data saved in the Receipt model, but we use the OCR service mock here for consistency)
+    receipt_file_path = os.path.join(settings.MEDIA_ROOT, receipt.file.name)
+    ocr_data, raw_ocr_text = perform_receipt_ocr(receipt_file_path)
+
+    # Find the corresponding Category object based on the OCR result
+    category_name_str = ocr_data.pop('category_name', 'Uncategorized')
+    
+    category_obj, _ = Category.objects.get_or_create(
+        category_name=category_name_str, 
+        
+        # --- FIX APPLIED HERE: Only using the 'user' default field ---
+        # The unrecognized 'notes' field has been removed to stop the FieldError.
+        defaults={'user': request.user} 
+    )
+    
+    ocr_data['category'] = category_obj 
+    
+    if request.method == 'POST':
+        # 3. Handle POST Request (Saving the final Expense)
+        form = ExpenseForm(request.POST, user=request.user) # Pass user for category filtering
+
+        if form.is_valid():
+            # Save the new Expense object
+            expense = form.save(commit=False)
+            
+            # Set required fields that are NOT in the form
+            expense.user = request.user
+            expense.entry_method = 'receipt_scan'
+            expense.save()
+            
+            # Link the new Expense object back to the existing Receipt object
+            receipt.expense = expense 
+            receipt.save()
+            
+            messages.success(request, f"Expense of ${expense.amount} confirmed and saved!")
+            # Assuming you have a detail view for expenses
+            return redirect('expenses:detail', pk=expense.pk) 
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+    
+    else:
+        # 4. Handle GET Request (Displaying the form)
+        form = ExpenseForm(initial=ocr_data, user=request.user)
+
+    context = {
+        'form': form,
+        'receipt': receipt,
+    }
+    
+    return render(request, 'expenses/receipt_review.html', context)
+# Placeholder for manual expense creation (fixes the current error)
+@login_required 
+def manual_create(request):
+    """Placeholder for the manual expense creation view."""
+    # In a real app, this would handle ExpenseForm and render the manual entry template.
+    form = ExpenseForm(user=request.user) 
+    context = {'form': form, 'entry_method': 'Manual'}
+    # You would need to create a manual_create.html template
+    return render(request, 'expenses/manual_create.html', context)

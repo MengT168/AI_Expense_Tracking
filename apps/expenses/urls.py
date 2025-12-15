@@ -12,4 +12,9 @@ urlpatterns = [
     path('upload-receipt/', views.receipt_upload, name='receipt_upload'),
     path('voice-input/', views.voice_input, name='voice_input'),
     path('text-parse/', views.text_parse, name='text_parse'),
+        # Receipt Scan Flow
+    path('create/receipt/', views.receipt_upload, name='receipt_upload'),
+    path('review/<int:pk>/', views.receipt_review, name='review_receipt'),
+    path('detail/<int:pk>/', views.expense_detail, name='detail'), 
+    
 ]

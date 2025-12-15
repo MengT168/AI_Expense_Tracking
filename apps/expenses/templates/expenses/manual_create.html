@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <h2 class="mb-4 text-primary"><i class="fas fa-keyboard"></i> Manual Expense Entry</h2>
+            
+            <ul class="nav nav-pills nav-fill mb-4 gap-2 shadow-sm p-1 bg-white rounded-pill">
+                <li class="nav-item">
+                    <a class="nav-link active rounded-pill" href="{% url 'expenses:create' %}"><i class="fas fa-keyboard"></i> Manual</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link rounded-pill" href="{% url 'expenses:receipt_upload' %}"><i class="fas fa-camera"></i> Receipt</a>
+                </li>
+                {% if user.preferences.voice_input_enabled %}
+                <li class="nav-item">
+                    <a class="nav-link rounded-pill" href="{% url 'expenses:voice_input' %}"><i class="fas fa-microphone"></i> Voice</a>
+                </li>
+                {% endif %}
+
+                {% if user.preferences.ai_suggestions_enabled %}
+                <li class="nav-item">
+                    <a class="nav-link rounded-pill" href="{% url 'expenses:text_parse' %}"><i class="fas fa-magic"></i> AI Text</a>
+                </li>
+                {% endif %}
+            </ul>
+
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {{ form.as_p }}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="fas fa-plus-circle"></i> Save Expense
+                            </button>
+                            <a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

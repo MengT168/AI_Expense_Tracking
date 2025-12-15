@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <h3 class="mb-4 text-center text-info"><i class="fas fa-edit"></i> Review & Confirm Expense</h3>
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h5 class="mb-0"><i class="fas fa-receipt"></i> Data Extracted from Receipt (ID: {{ receipt.pk }})</h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small">
+                        Review the information extracted by the AI. You must click **Save Final Expense** to create the record.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4 text-center">
+                            <img src="{{ receipt.file.url }}" class="img-fluid rounded shadow-sm" alt="Uploaded Receipt" style="max-height: 200px; border: 1px solid #ccc;">
+                        </div>
+
+                        {{ form.as_p }}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                                <i class="fas fa-check-circle"></i> Save Final Expense
+                            </button>
+                            <a href="{% url 'expenses:receipt_upload' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo"></i> Cancel & Scan New Receipt
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if receipt.ocr_text %}
+            <div class="alert alert-light border mt-3 small shadow-sm">
+                <h6 class="text-info">Raw OCR Text:</h6>
+                <pre class="mb-0 small bg-light p-2 rounded">{{ receipt.ocr_text }}</pre>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
