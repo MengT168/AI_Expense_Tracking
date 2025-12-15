@@ -96,14 +96,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'expense_tracker',
         'USER': 'root',
-        'PASSWORD': 'Meng123',
-        'HOST': 'localhost',
-        'PORT': '3307',
+        'PASSWORD':'',
+        'HOST': '127.0.0.1',            # Or 'localhost'
+        'PORT': '3306',  
+        'OPTIONS': {
+            # This is the critical line for resolving error 1071
+            'charset': 'utf8mb4',
+            
+            # Recommended to enable MySQL Strict Mode for data integrity
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'", 
+        },
     }
 }
 

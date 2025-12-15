@@ -16,13 +16,9 @@ for currency in pycountry.currencies:
     ALL_CURRENCIES.append((currency.alpha_3, label))
 
 ALL_CURRENCIES = sorted(ALL_CURRENCIES, key=lambda x: x[1])
-
 class User(AbstractUser):
-    """
-    Simple user model for personal expense tracking.
-    No roles, no permissions - just basic user info.
-    """
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, max_length=191)     # Reduce from default 254
+    username = models.CharField(max_length=191, unique=True)   # Reduce from default 150
     full_name = models.CharField(max_length=100)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -36,6 +32,7 @@ class User(AbstractUser):
     
     def __str__(self):
         return self.email
+
 
 class UserPreference(models.Model):
     """User settings and preferences"""
