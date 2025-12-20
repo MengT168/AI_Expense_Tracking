@@ -19,6 +19,7 @@ class Expense(models.Model):
     expense_date = models.DateField()
     merchant_name = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
+    notes = models.TextField(blank=True, null=True)
     payment_method = models.CharField(max_length=50, blank=True)
     entry_method = models.CharField(max_length=20, choices=ENTRY_METHODS, default='manual')
     created_at = models.DateTimeField(auto_now_add=True)
