@@ -121,7 +121,8 @@ def _extract_amounts_from_line(line):
 
 def _smart_extract(text, user):
     """
-    Advanced Extraction Algorithm.
+    Advanced Extraction Algorithm for Receipt Upload.
+    Smart detection with case-insensitive keyword matching.
     """
     text_lower = text.lower()
     lines = [line.strip() for line in text.split('\n') if line.strip()]
@@ -141,60 +142,100 @@ def _smart_extract(text, user):
     print(f"EXTRACTION DEBUG - {len(lines)} lines")
     print(f"{'='*70}")
 
-    # EXTRACT AMOUNT
+    # EXTRACT AMOUNT with enhanced keyword detection
     candidates = []
     
+    # Priority keywords (case-insensitive)
     priority_keywords = [
-        ('total amount', 1000, 'TOTAL AMOUNT'),
-        ('grand total', 900, 'GRAND TOTAL'),
-        ('amount due', 800, 'AMOUNT DUE'),
-        ('balance due', 700, 'BALANCE DUE'),
-        ('total', 600, 'TOTAL'),              # Just "total" (not subtotal)
-        ('sub total', 400, 'SUB TOTAL'),      
-        ('subtotal', 400, 'SUBTOTAL'),       
-        ('amount', 300, 'AMOUNT'),
-        ('balance', 200, 'BALANCE'),
+        (['total amount', 'totalamount', 'amount total', 'tot amt'], 1000, 'TOTAL AMOUNT'),
+        (['grand total', 'grandtotal'], 900, 'GRAND TOTAL'),
+        (['final total', 'finaltotal', 'net total', 'nettotal'], 850, 'FINAL TOTAL'),
+        (['amount due', 'amountdue', 'due amount'], 800, 'AMOUNT DUE'),
+        (['balance due', 'balancedue', 'due balance'], 750, 'BALANCE DUE'),
+        (['total', 'tot', 'ttl'], 600, 'TOTAL'),
+        (['sub total', 'subtotal', 'sub-total', 'sub ttl'], 400, 'SUBTOTAL'),
+        (['amount', 'amt'], 300, 'AMOUNT'),
+        (['balance', 'bal'], 200, 'BALANCE'),
     ]
     
-    exclusion_keywords = ['cash', 'change', 'change due', 'tender', 'payment', 'visa', 'card', 'mastercard']
+    # Absolute exclusions
+    exclusion_keywords = [
+        'cash', 'change', 'change due', 'tender', 'tendered',
+        'payment', 'visa', 'card', 'mastercard', 'amex', 'credit card', 'debit card',
+        'received', 'given', 'discount', 'savings', 'you saved'
+    ]
     
-    print("\n🔍 SEARCHING FOR KEYWORDS:")
+    print("\n🔍 SMART KEYWORD SEARCH:")
     
     for i, line in enumerate(lines):
         line_clean = line.lower().strip()
         line_original = line.strip()
         
+        # Super normalize: remove ALL spaces, dashes, underscores, colons for matching
+        line_super_normalized = re.sub(r'[\s\-_:;.,]+', '', line_clean)
+        # Also keep version with single spaces
+        line_space_normalized = re.sub(r'[\s\-_:;.,]+', ' ', line_clean).strip()
+        
         print(f"\n📍 Line {i}: '{line_original}'")
+        print(f"   Super normalized: '{line_super_normalized}'")
         
         # Skip excluded lines
         if any(exc in line_clean for exc in exclusion_keywords):
-            print(f"  🚫 EXCLUDED")
+            print(f"  🚫 EXCLUDED (contains: {[e for e in exclusion_keywords if e in line_clean]})")
             continue
         
-        # Check for ALL matching keywords and find the MOST SPECIFIC one
+        # Find ALL matching keywords and pick the most specific
         matching_keywords = []
-        for keyword, score, name in priority_keywords:
-            if keyword in line_clean:
-                # Special handling: if line has "subtotal" or "sub total", 
-                # don't match plain "total"
-                if keyword == 'total' and ('subtotal' in line_clean or 'sub total' in line_clean):
-                    continue
-                matching_keywords.append((keyword, score, name))
+        
+        for keyword_variations, score, name in priority_keywords:
+            keyword_matched = False
+            matched_variation = ""
+            
+            for keyword in keyword_variations:
+                # Create multiple versions of the keyword to match
+                keyword_no_space = keyword.replace(' ', '').replace('-', '')
+                keyword_with_space = keyword.replace('-', ' ')
+                
+                # Check in multiple normalized versions
+                if (keyword_no_space in line_super_normalized or 
+                    keyword_with_space in line_space_normalized or
+                    keyword in line_clean):
+                    
+                    # Special handling: if line has "subtotal", don't match plain "total"
+                    if keyword in ['total', 'tot', 'ttl']:
+                        # Check if subtotal indicators exist
+                        subtotal_no_space = ['subtotal', 'subtot', 'subttl', 'sub']
+                        if any(ind in line_super_normalized for ind in subtotal_no_space):
+                            # But also check if the word "sub" appears BEFORE "total"
+                            # This prevents "TOTAL" line from being mistaken as subtotal
+                            sub_indicators_with_space = ['sub total', 'subtotal', 'sub-total', 'sub tot']
+                            if any(ind in line_space_normalized for ind in sub_indicators_with_space):
+                                print(f"  ⚠️ Skipping '{keyword}' - line has SUBTOTAL indicators")
+                                keyword_matched = False
+                                break
+                    
+                    keyword_matched = True
+                    matched_variation = keyword
+                    print(f"  ✓ Matched: '{keyword}' → {name} (score: {score})")
+                    break  # Found a match in this variation group
+            
+            if keyword_matched:
+                matching_keywords.append((matched_variation, score, name, len(matched_variation)))
         
         if not matching_keywords:
-            print(f"  ⚪ No keyword")
+            print(f"  ⚪ No keyword match")
             continue
         
-        # Sort by score (highest) and keyword length (longest = more specific)
-        matching_keywords.sort(key=lambda x: (x[1], len(x[0])), reverse=True)
-        keyword_text, keyword_score, keyword_name = matching_keywords[0]
+        # Sort by: score (highest), then keyword length (longest = most specific)
+        matching_keywords.sort(key=lambda x: (x[1], x[3]), reverse=True)
+        keyword_text, keyword_score, keyword_name, _ = matching_keywords[0]
         
-        print(f"  🎯 Keyword: '{keyword_text}' ({keyword_score})")
+        print(f"  🎯 BEST MATCH: '{keyword_text}' → {keyword_name} (score: {keyword_score})")
         
-        # Extract amounts
+        # Extract amounts from this line
         amounts_in_line = _extract_amounts_from_line(line_original)
         
-        # Check next line if needed
+        # If no amount on this line, check next line
         if not amounts_in_line and i + 1 < len(lines):
             next_line = lines[i + 1]
             next_line_clean = next_line.lower().strip()
@@ -203,125 +244,389 @@ def _smart_extract(text, user):
                 print(f"  📋 Checking next line: '{next_line}'")
                 amounts_in_line = _extract_amounts_from_line(next_line)
                 if amounts_in_line:
-                    print(f"  ✨ Found on next line!")
+                    print(f"  ✨ Found amount on next line!")
         
         if not amounts_in_line:
             print(f"  ⚠️ No amount found")
             continue
         
-        # Add candidates with the BEST keyword score for this line
+        # Add all amounts from this line with keyword score
         for amount in amounts_in_line:
-            print(f"  ✅ MATCH: ${amount} ({keyword_name})")
+            print(f"  ✅ CANDIDATE: ${amount} with {keyword_name} (score: {keyword_score})")
             candidates.append((amount, keyword_score, i, f"{keyword_name}: {line_original}"))
     
-    # Select best
+    # Select best candidate
     if candidates:
-        candidates.sort(key=lambda x: x[1], reverse=True)
+        # Sort by score (highest first), then by line position (later = better)
+        candidates.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        
+        print(f"\n📊 ALL CANDIDATES:")
+        for amt, score, line_num, desc in candidates[:5]:  # Show top 5
+            print(f"   ${amt} - score {score} - {desc[:50]}")
+        
         best_amount, best_score, line_idx, debug_info = candidates[0]
         data['amount'] = best_amount
         
         print(f"\n🎯 SELECTED: ${best_amount} (score: {best_score})")
+        print(f"   From: {debug_info}")
         
-        if best_score >= 600:
+        # Calculate confidence based on score
+        if best_score >= 800:
             data['confidence'] += 0.95
+        elif best_score >= 600:
+            data['confidence'] += 0.90
         elif best_score >= 400:
-            data['confidence'] += 0.85
+            data['confidence'] += 0.75
         else:
-            data['confidence'] += 0.70
+            data['confidence'] += 0.60
     else:
-        # Fallback
-        print("\n⚠️ No keywords found, using fallback")
+        # Fallback strategy
+        print("\n⚠️ NO KEYWORD MATCHES FOUND")
+        print("🔄 Using fallback: largest reasonable amount...")
+        
         all_amounts = []
         for i, line in enumerate(lines):
-            if any(exc in line.lower() for exc in ['cash', 'change', 'payment', 'visa', 'card']):
+            line_lower = line.lower()
+            # Skip obvious exclusions
+            if any(exc in line_lower for exc in exclusion_keywords):
                 continue
+            
             amounts = _extract_amounts_from_line(line)
             for amt in amounts:
                 all_amounts.append((amt, i, line))
         
         if all_amounts:
+            # Filter reasonable amounts
             reasonable = [(a, i, l) for a, i, l in all_amounts if 0.50 <= a <= 5000]
+            
             if reasonable:
+                # Pick largest (likely the total)
                 reasonable.sort(key=lambda x: x[0], reverse=True)
                 fallback_amount, fallback_line_idx, fallback_line = reasonable[0]
+                
                 data['amount'] = fallback_amount
                 data['confidence'] += 0.30
                 print(f"🔄 FALLBACK: ${fallback_amount}")
+                print(f"   From line {fallback_line_idx}: {fallback_line}")
             else:
                 data['amount'] = Decimal('0.00')
+                print("❌ NO REASONABLE AMOUNTS")
         else:
             data['amount'] = Decimal('0.00')
+            print("❌ NO AMOUNTS FOUND")
 
-    # EXTRACT DATE
-    date_patterns = [
-        (r'DATE[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{4})', ['%m/%d/%Y', '%d/%m/%Y']),
-        (r'(\d{1,2}[/-]\d{1,2}[/-]\d{4})', ['%m/%d/%Y', '%d/%m/%Y']),
+    # EXTRACT DATE with comprehensive smart detection
+    date_found = False
+    
+    # Create super-normalized version of text for keyword matching (no spaces)
+    text_super_normalized = re.sub(r'[\s\-_:;.,]+', '', text.lower())
+    text_space_normalized = re.sub(r'[\s\-_:;.,]+', ' ', text.lower()).strip()
+    
+    print(f"\n📅 DATE DETECTION:")
+    
+    # Priority date keywords with variations (case-insensitive, spacing-agnostic)
+    date_keyword_groups = [
+        ['duedate', 'due date', 'due-date'],
+        ['transactiondate', 'transaction date', 'trans date', 'transdate'],
+        ['purchasedate', 'purchase date'],
+        ['receiptdate', 'receipt date'],
+        ['saledate', 'sale date'],
+        ['orderdate', 'order date'],
+        ['invoicedate', 'invoice date'],
+        ['date', 'dated'],
     ]
     
-    for pattern, formats in date_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            date_str = match.group(1)
-            for fmt in formats:
-                try:
-                    parsed_date = datetime.strptime(date_str, fmt).date()
-                    if (today - timedelta(days=730)) <= parsed_date <= today:
-                        data['date'] = parsed_date
-                        data['confidence'] += 0.3
-                        print(f"📅 DATE: {parsed_date}")
+    # Comprehensive date patterns (ordered by specificity)
+    date_patterns = [
+        # 1. Text month formats (28 August 2022, August 28 2022, 28-Aug-2022)
+        (r'(\d{1,2})\s*(?:st|nd|rd|th)?\s*[,\s\-]*\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[,\s\-]+(\d{4})', 
+         lambda m: f"{m.group(1)} {m.group(2)} {m.group(3)}", 
+         ['%d %B %Y', '%d %b %Y'],
+         'text_month_day_first'),
+        
+        (r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})',
+         lambda m: f"{m.group(2)} {m.group(1)} {m.group(3)}",
+         ['%d %B %Y', '%d %b %Y'],
+         'text_month_month_first'),
+        
+        # 2. ISO format (2024-12-21, 2024/12/21, 20241221)
+        (r'(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+         lambda m: f"{m.group(1)}-{m.group(2)}-{m.group(3)}",
+         ['%Y-%m-%d', '%Y/%m/%d'],
+         'iso_format'),
+        
+        (r'\b(20\d{2})(\d{2})(\d{2})\b',
+         lambda m: f"{m.group(1)}-{m.group(2)}-{m.group(3)}",
+         ['%Y-%m-%d'],
+         'compact_format'),
+        
+        # 3. Standard formats (12/05/2024, 12-05-2024, 28 12 2025)
+        (r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b',
+         lambda m: f"{m.group(1)}/{m.group(2)}/{m.group(3)}",
+         ['%m/%d/%Y', '%d/%m/%Y'],
+         'standard_4digit_year'),
+        
+        (r'\b(\d{1,2})\s+(\d{1,2})\s+(\d{4})\b',
+         lambda m: f"{m.group(1)}/{m.group(2)}/{m.group(3)}",
+         ['%m/%d/%Y', '%d/%m/%Y'],
+         'space_separated'),
+        
+        # 4. Short year formats (12/05/24, 12-05-24)
+        (r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b',
+         lambda m: f"{m.group(1)}/{m.group(2)}/{m.group(3)}",
+         ['%m/%d/%y', '%d/%m/%y'],
+         'short_year'),
+    ]
+    
+    # First, try to find dates near keywords
+    for keyword_group in date_keyword_groups:
+        for keyword in keyword_group:
+            keyword_no_space = keyword.replace(' ', '').replace('-', '')
+            keyword_with_space = keyword.replace('-', ' ')
+            
+            # Check if keyword exists in text
+            keyword_found = False
+            keyword_position = -1
+            
+            if keyword_no_space in text_super_normalized:
+                keyword_found = True
+                keyword_position = text_super_normalized.find(keyword_no_space)
+                print(f"   🔑 Found keyword: '{keyword}' (no space version)")
+            elif keyword_with_space in text_space_normalized:
+                keyword_found = True
+                keyword_position = text_space_normalized.find(keyword_with_space)
+                print(f"   🔑 Found keyword: '{keyword}' (with space version)")
+            
+            if keyword_found:
+                # Look for date patterns near this keyword (within 50 chars)
+                start_pos = max(0, keyword_position - 10)
+                end_pos = min(len(text), keyword_position + 100)
+                nearby_text = text[start_pos:end_pos]
+                
+                print(f"   📝 Searching near keyword: '{nearby_text[:60]}...'")
+                
+                for pattern, extractor, formats, pattern_name in date_patterns:
+                    match = re.search(pattern, nearby_text, re.IGNORECASE)
+                    if match:
+                        try:
+                            date_str = extractor(match)
+                            print(f"   ✓ Pattern matched ({pattern_name}): {match.group(0)}")
+                            print(f"   ✓ Extracted: {date_str}")
+                            
+                            for fmt in formats:
+                                try:
+                                    parsed_date = datetime.strptime(date_str, fmt).date()
+                                    
+                                    # Sanity checks
+                                    if parsed_date > today:
+                                        print(f"   ⚠️ Future date (skipping): {parsed_date}")
+                                        continue
+                                    
+                                    if parsed_date < today - timedelta(days=1095):
+                                        print(f"   ⚠️ Too old (skipping): {parsed_date}")
+                                        continue
+                                    
+                                    # Valid date found!
+                                    data['date'] = parsed_date
+                                    data['confidence'] += 0.35  # Higher confidence with keyword
+                                    date_found = True
+                                    print(f"   ✅ DATE FOUND (with keyword): {parsed_date}")
+                                    break
+                                except ValueError:
+                                    continue
+                            
+                            if date_found:
+                                break
+                                
+                        except Exception as e:
+                            continue
+                    
+                    if date_found:
                         break
-                except:
-                    continue
+            
+            if date_found:
+                break
+        
+        if date_found:
             break
+    
+    # If not found with keywords, try all patterns across entire text
+    if not date_found:
+        print(f"   🔍 No keyword found, searching entire text...")
+        
+        for pattern, extractor, formats, pattern_name in date_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    date_str = extractor(match)
+                    print(f"   ✓ Pattern matched ({pattern_name}): {match.group(0)}")
+                    print(f"   ✓ Extracted: {date_str}")
+                    
+                    for fmt in formats:
+                        try:
+                            parsed_date = datetime.strptime(date_str, fmt).date()
+                            
+                            if parsed_date > today:
+                                continue
+                            
+                            if parsed_date < today - timedelta(days=1095):
+                                continue
+                            
+                            data['date'] = parsed_date
+                            data['confidence'] += 0.25  # Lower confidence without keyword
+                            date_found = True
+                            print(f"   ✅ DATE FOUND: {parsed_date}")
+                            break
+                        except ValueError:
+                            continue
+                    
+                    if date_found:
+                        break
+                        
+                except Exception as e:
+                    continue
+    
+    # Final fallback: search first 10 lines for simple patterns
+    if not date_found:
+        print(f"   🔄 Fallback: searching first 10 lines...")
+        
+        for i, line in enumerate(lines[:10]):
+            if any(x in line.lower() for x in ['total', 'amount', 'price', 'qty', 'quantity']):
+                continue
+            
+            simple_patterns = [
+                (r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})', ['%m/%d/%Y', '%d/%m/%Y']),
+                (r'(\d{1,2})\s+(\d{1,2})\s+(\d{4})', ['%m/%d/%Y', '%d/%m/%Y']),
+            ]
+            
+            for pattern, formats in simple_patterns:
+                match = re.search(pattern, line)
+                if match:
+                    date_str = match.group(0).replace(' ', '/').replace('-', '/')
+                    for fmt in formats:
+                        try:
+                            parsed_date = datetime.strptime(date_str, fmt).date()
+                            if today - timedelta(days=1095) <= parsed_date <= today:
+                                data['date'] = parsed_date
+                                data['confidence'] += 0.15
+                                date_found = True
+                                print(f"   ✅ FALLBACK: {parsed_date} from line {i}")
+                                break
+                        except:
+                            continue
+                if date_found:
+                    break
+            if date_found:
+                break
+    
+    if not date_found:
+        data['date'] = today
+        print(f"   ⚠️ No date found, using today: {today}")
 
-    # EXTRACT MERCHANT
+    # EXTRACT MERCHANT with enhanced detection
     known_merchants = [
-        'Starbucks', 'Walmart', 'Target', 'Burger King', 'Shell',
-        'Supermarket', 'Wall-Mart', 'Burger Kingdom'
+        'Starbucks', 'Walmart', 'Wall-Mart', 'Target', 'Amazon', 'Costco',
+        'McDonald\'s', 'Burger King', 'KFC', 'Subway', 'Domino\'s', 'Pizza Hut',
+        'Shell', 'Chevron', 'Exxon', 'BP', 'Total', 'Caltex',
+        'Whole Foods', 'Trader Joe\'s', 'Safeway', 'Kroger',
+        'CVS', 'Walgreens', '7-Eleven', 'Circle K',
+        'Supermarket', 'Burger Kingdom'
     ]
     
     for merchant in known_merchants:
         if merchant.lower() in text_lower:
             data['merchant'] = merchant
             data['confidence'] += 0.2
-            print(f"🏪 {merchant}")
+            print(f"🏪 MERCHANT: {merchant} (known brand)")
             break
     
+    # If no known merchant, extract from top of receipt
     if not data['merchant']:
-        for line in lines[:3]:
+        for line in lines[:5]:  # Check first 5 lines
             clean = line.strip()
-            if len(clean) > 3 and not any(x in clean.upper() for x in ['RECEIPT', 'TEL', 'ADDRESS', 'WWW']):
-                if sum(c.isdigit() for c in clean) / len(clean) < 0.5:
+            # Skip header/info lines
+            if len(clean) > 2 and not any(x in clean.upper() for x in [
+                'RECEIPT', 'INVOICE', 'TEL', 'PHONE', 'FAX', 'ADDRESS', 
+                'STREET', 'CITY', 'STATE', 'ZIP', 'WWW', '.COM', 'HTTP',
+                'MANAGER', 'CASHIER', 'SERVER', 'THANK YOU'
+            ]):
+                # Skip if mostly numbers (phone, address)
+                digit_ratio = sum(c.isdigit() for c in clean) / len(clean) if len(clean) > 0 else 0
+                if digit_ratio < 0.5 and len(clean) <= 50:
                     data['merchant'] = clean.title()[:30]
+                    print(f"🏪 MERCHANT: {data['merchant']} (extracted)")
                     break
     
     if not data['merchant']:
         data['merchant'] = "Unknown Merchant"
+        print(f"🏪 MERCHANT: Unknown (default)")
 
-    # PAYMENT & CATEGORY
-    if any(x in text_lower for x in ['visa', 'mastercard', 'credit']):
-        data['payment_method'] = 'Credit Card'
-    elif 'cash' in text_lower:
-        data['payment_method'] = 'Cash'
-    
-    cat_map = {
-        'Food & Dining': ['burger', 'pizza', 'bacon'],
-        'Groceries': ['supermarket', 'walmart', 'market'],
-        'Transportation': ['gas', 'fuel', 'shell'],
+    # SMART CATEGORY DETECTION based on merchant and keywords
+    category_keywords = {
+        'Food & Dining': [
+            'restaurant', 'cafe', 'coffee', 'burger', 'pizza', 'sushi',
+            'chinese', 'thai', 'italian', 'mexican', 'fast food',
+            'starbucks', 'mcdonald', 'burger king', 'kfc', 'subway',
+            'food', 'lunch', 'dinner', 'breakfast', 'meal'
+        ],
+        'Groceries': [
+            'supermarket', 'grocery', 'market', 'walmart', 'target', 'costco',
+            'whole foods', 'trader joe', 'safeway', 'kroger',
+            'vegetables', 'fruits', 'meat', 'dairy'
+        ],
+        'Transportation': [
+            'gas', 'fuel', 'petrol', 'diesel', 'shell', 'chevron', 'exxon', 'bp',
+            'parking', 'toll', 'uber', 'lyft', 'taxi', 'transportation'
+        ],
+        'Shopping': [
+            'store', 'mall', 'shop', 'clothing', 'fashion', 'electronics',
+            'amazon', 'best buy', 'apple store'
+        ],
     }
     
-    for cat_name, keywords in cat_map.items():
-        if any(k in text_lower for k in keywords):
-            cat = Category.objects.filter(user=user, category_name__icontains=cat_name.split()[0]).first()
+    for cat_name, keywords in category_keywords.items():
+        if any(keyword in text_lower for keyword in keywords):
+            cat = Category.objects.filter(
+                user=user,
+                category_name__icontains=cat_name.split()[0]
+            ).first()
             if cat:
                 data['category'] = cat
-                data['confidence'] += 0.1
+                data['confidence'] += 0.15
+                print(f"📁 CATEGORY: {cat_name} (keyword match)")
                 break
+    
+    if not data['category']:
+        print(f"📁 CATEGORY: None (will use fallback)")
 
+    # SMART PAYMENT DETECTION
+    payment_indicators = {
+        'Credit Card': ['visa', 'mastercard', 'amex', 'discover', 'credit', 'card'],
+        'Cash': ['cash', 'cash payment'],
+        'Bank Transfer': ['transfer', 'online payment', 'e-payment'],
+    }
+    
+    for method, indicators in payment_indicators.items():
+        if any(ind in text_lower for ind in indicators):
+            data['payment_method'] = method
+            print(f"💳 PAYMENT: {method}")
+            break
+    
+    if not data['payment_method']:
+        data['payment_method'] = 'Cash'
+        print(f"💳 PAYMENT: Cash (default)")
+
+    # Final confidence calculation
     data['confidence'] = min(data['confidence'], 1.0)
     
     print(f"\n{'='*70}")
-    print(f"FINAL: ${data['amount']} at {data['merchant']}")
+    print(f"FINAL EXTRACTION:")
+    print(f"  Amount: ${data['amount']}")
+    print(f"  Date: {data['date']}")
+    print(f"  Merchant: {data['merchant']}")
+    print(f"  Category: {data['category'].category_name if data['category'] else 'None'}")
+    print(f"  Payment: {data['payment_method']}")
+    print(f"  Confidence: {data['confidence']:.1%}")
     print(f"{'='*70}\n")
     
     return data
@@ -573,12 +878,6 @@ def _smart_payment_detect(text):
     
     print("💳 Payment: Cash (default)")
     return 'Cash'
-    cat, _ = Category.objects.get_or_create(
-        user=user, 
-        category_name='Uncategorized', 
-        defaults={'icon': '❓', 'color': '#6c757d'}
-    )
-    return cat
 
 
 def _get_fallback_category(user):
