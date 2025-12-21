@@ -318,127 +318,139 @@ def _smart_extract(text, user):
     # EXTRACT DATE with comprehensive smart detection
     date_found = False
     
-    # Create super-normalized version of text for keyword matching (no spaces)
-    text_super_normalized = re.sub(r'[\s\-_:;.,]+', '', text.lower())
-    text_space_normalized = re.sub(r'[\s\-_:;.,]+', ' ', text.lower()).strip()
-    
     print(f"\n📅 DATE DETECTION:")
     
-    # Priority date keywords with variations (case-insensitive, spacing-agnostic)
+    # Priority date keywords with ALL variations (spacing-agnostic)
     date_keyword_groups = [
-        ['duedate', 'due date', 'due-date'],
-        ['transactiondate', 'transaction date', 'trans date', 'transdate'],
-        ['purchasedate', 'purchase date'],
-        ['receiptdate', 'receipt date'],
-        ['saledate', 'sale date'],
-        ['orderdate', 'order date'],
-        ['invoicedate', 'invoice date'],
-        ['date', 'dated'],
+        ['due', 'duedate', 'due date', 'due-date', 'duedt'],
+        ['receiptdate', 'receipt date', 'receipt-date'],
+        ['transactiondate', 'transaction date', 'trans date', 'transdate', 'trans-date'],
+        ['purchasedate', 'purchase date', 'purchase-date'],
+        ['saledate', 'sale date', 'sale-date'],
+        ['orderdate', 'order date', 'order-date'],
+        ['invoicedate', 'invoice date', 'invoice-date'],
+        ['date', 'dated', 'dt'],
     ]
     
-    # Comprehensive date patterns (ordered by specificity)
+    # Comprehensive date patterns with more flexible text month matching
     date_patterns = [
-        # 1. Text month formats (28 August 2022, August 28 2022, 28-Aug-2022)
-        (r'(\d{1,2})\s*(?:st|nd|rd|th)?\s*[,\s\-]*\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[,\s\-]+(\d{4})', 
-         lambda m: f"{m.group(1)} {m.group(2)} {m.group(3)}", 
+        # 1. Text month formats - MORE FLEXIBLE
+        # Day Month Year (28 August 2022, 28Aug2022, 28-August-2022)
+        (r'(\d{1,2})\s*(?:st|nd|rd|th)?\s*[,\s\-]*\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*[,\s\-]*\s*(\d{2,4})', 
+         lambda m: f"{m.group(1)} {m.group(2)} {m.group(3) if len(m.group(3)) == 4 else '20' + m.group(3)}", 
          ['%d %B %Y', '%d %b %Y'],
-         'text_month_day_first'),
+         'text_day_month_year'),
         
-        (r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})',
-         lambda m: f"{m.group(2)} {m.group(1)} {m.group(3)}",
+        # Month Day Year (August 28 2022, Aug-28-2022)
+        (r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*[,\s\-]*\s*(\d{1,2})(?:st|nd|rd|th)?\s*[,\s\-]*\s*(\d{2,4})',
+         lambda m: f"{m.group(2)} {m.group(1)} {m.group(3) if len(m.group(3)) == 4 else '20' + m.group(3)}",
          ['%d %B %Y', '%d %b %Y'],
-         'text_month_month_first'),
+         'text_month_day_year'),
+        
+        # Month Year only (August 2022, Aug-2022)
+        (r'(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*[,\s\-]*\s*(\d{4})',
+         lambda m: f"01 {m.group(1)} {m.group(2)}",
+         ['%d %B %Y', '%d %b %Y'],
+         'text_month_year'),
         
         # 2. ISO format (2024-12-21, 2024/12/21, 20241221)
-        (r'(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+        (r'(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})',
          lambda m: f"{m.group(1)}-{m.group(2)}-{m.group(3)}",
-         ['%Y-%m-%d', '%Y/%m/%d'],
+         ['%Y-%m-%d'],
          'iso_format'),
         
         (r'\b(20\d{2})(\d{2})(\d{2})\b',
          lambda m: f"{m.group(1)}-{m.group(2)}-{m.group(3)}",
          ['%Y-%m-%d'],
-         'compact_format'),
+         'compact_iso'),
         
         # 3. Standard formats (12/05/2024, 12-05-2024, 28 12 2025)
-        (r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b',
+        (r'\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{4})\b',
          lambda m: f"{m.group(1)}/{m.group(2)}/{m.group(3)}",
          ['%m/%d/%Y', '%d/%m/%Y'],
-         'standard_4digit_year'),
+         'standard_slash_dash'),
         
         (r'\b(\d{1,2})\s+(\d{1,2})\s+(\d{4})\b',
          lambda m: f"{m.group(1)}/{m.group(2)}/{m.group(3)}",
          ['%m/%d/%Y', '%d/%m/%Y'],
          'space_separated'),
         
-        # 4. Short year formats (12/05/24, 12-05-24)
-        (r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{2})\b',
+        # 4. Short year (12/05/24, 12-05-24)
+        (r'\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2})\b',
          lambda m: f"{m.group(1)}/{m.group(2)}/{m.group(3)}",
          ['%m/%d/%y', '%d/%m/%y'],
          'short_year'),
     ]
     
-    # First, try to find dates near keywords
+    # Strategy 1: Search for dates WITH keywords (higher priority)
     for keyword_group in date_keyword_groups:
         for keyword in keyword_group:
-            keyword_no_space = keyword.replace(' ', '').replace('-', '')
-            keyword_with_space = keyword.replace('-', ' ')
+            # Create regex pattern that's flexible about spacing
+            # Convert "due date" to match "due[\s\-:]*date"
+            keyword_pattern = keyword.replace(' ', r'[\s\-:]*').replace('-', r'[\s\-:]*')
             
-            # Check if keyword exists in text
-            keyword_found = False
-            keyword_position = -1
+            # Search for keyword in text (case-insensitive)
+            keyword_regex = re.compile(keyword_pattern, re.IGNORECASE)
+            keyword_match = keyword_regex.search(text)
             
-            if keyword_no_space in text_super_normalized:
-                keyword_found = True
-                keyword_position = text_super_normalized.find(keyword_no_space)
-                print(f"   🔑 Found keyword: '{keyword}' (no space version)")
-            elif keyword_with_space in text_space_normalized:
-                keyword_found = True
-                keyword_position = text_space_normalized.find(keyword_with_space)
-                print(f"   🔑 Found keyword: '{keyword}' (with space version)")
-            
-            if keyword_found:
-                # Look for date patterns near this keyword (within 50 chars)
-                start_pos = max(0, keyword_position - 10)
-                end_pos = min(len(text), keyword_position + 100)
-                nearby_text = text[start_pos:end_pos]
+            if keyword_match:
+                print(f"   🔑 Found keyword: '{keyword}' at position {keyword_match.start()}")
+                print(f"      Matched text: '{keyword_match.group(0)}'")
                 
-                print(f"   📝 Searching near keyword: '{nearby_text[:60]}...'")
+                # Get text around the keyword with much more space for dates on same line
+                # Some receipts have "DUE DATE        26/02/2019" with lots of spacing
+                start_pos = max(0, keyword_match.start() - 50)
+                end_pos = min(len(text), keyword_match.end() + 200)  # Increased from 100 to 200
+                context_text = text[start_pos:end_pos]
                 
+                # Also check the same line specifically
+                # Find which line contains the keyword
+                for line_idx, line in enumerate(lines):
+                    if keyword_match.group(0).lower() in line.lower():
+                        print(f"      Found in line {line_idx}: '{line.strip()}'")
+                        # Add this line to context
+                        context_text = line + " " + context_text
+                        break
+                
+                print(f"      Context: '{context_text[:100]}...'")
+                
+                # Try to find date patterns in this context
                 for pattern, extractor, formats, pattern_name in date_patterns:
-                    match = re.search(pattern, nearby_text, re.IGNORECASE)
+                    match = re.search(pattern, context_text, re.IGNORECASE)
                     if match:
                         try:
                             date_str = extractor(match)
-                            print(f"   ✓ Pattern matched ({pattern_name}): {match.group(0)}")
-                            print(f"   ✓ Extracted: {date_str}")
+                            print(f"      ✓ Pattern ({pattern_name}): {match.group(0)}")
+                            print(f"      ✓ Extracted: {date_str}")
                             
                             for fmt in formats:
                                 try:
                                     parsed_date = datetime.strptime(date_str, fmt).date()
                                     
-                                    # Sanity checks
+                                    # Validation
                                     if parsed_date > today:
-                                        print(f"   ⚠️ Future date (skipping): {parsed_date}")
+                                        print(f"      ⚠️ Future date: {parsed_date}")
                                         continue
                                     
                                     if parsed_date < today - timedelta(days=1095):
-                                        print(f"   ⚠️ Too old (skipping): {parsed_date}")
+                                        print(f"      ⚠️ Too old: {parsed_date}")
                                         continue
                                     
-                                    # Valid date found!
+                                    # Success!
                                     data['date'] = parsed_date
-                                    data['confidence'] += 0.35  # Higher confidence with keyword
+                                    data['confidence'] += 0.35
                                     date_found = True
-                                    print(f"   ✅ DATE FOUND (with keyword): {parsed_date}")
+                                    print(f"      ✅ DATE (with keyword): {parsed_date}")
                                     break
-                                except ValueError:
+                                except ValueError as e:
+                                    print(f"      ⚠️ Parse error: {e}")
                                     continue
                             
                             if date_found:
                                 break
                                 
                         except Exception as e:
+                            print(f"      ⚠️ Error: {e}")
                             continue
                     
                     if date_found:
@@ -450,70 +462,77 @@ def _smart_extract(text, user):
         if date_found:
             break
     
-    # If not found with keywords, try all patterns across entire text
+    # Strategy 2: Search entire text without keywords
     if not date_found:
-        print(f"   🔍 No keyword found, searching entire text...")
+        print(f"   🔍 No keyword found, searching all text...")
         
         for pattern, extractor, formats, pattern_name in date_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                try:
-                    date_str = extractor(match)
-                    print(f"   ✓ Pattern matched ({pattern_name}): {match.group(0)}")
-                    print(f"   ✓ Extracted: {date_str}")
-                    
-                    for fmt in formats:
-                        try:
-                            parsed_date = datetime.strptime(date_str, fmt).date()
-                            
-                            if parsed_date > today:
-                                continue
-                            
-                            if parsed_date < today - timedelta(days=1095):
-                                continue
-                            
-                            data['date'] = parsed_date
-                            data['confidence'] += 0.25  # Lower confidence without keyword
-                            date_found = True
-                            print(f"   ✅ DATE FOUND: {parsed_date}")
-                            break
-                        except ValueError:
-                            continue
-                    
-                    if date_found:
-                        break
+            matches = list(re.finditer(pattern, text, re.IGNORECASE))
+            
+            if matches:
+                print(f"      Found {len(matches)} match(es) for {pattern_name}")
+                
+                for match in matches:
+                    try:
+                        date_str = extractor(match)
+                        print(f"      ✓ Pattern: {match.group(0)}")
+                        print(f"      ✓ Extracted: {date_str}")
                         
-                except Exception as e:
-                    continue
+                        for fmt in formats:
+                            try:
+                                parsed_date = datetime.strptime(date_str, fmt).date()
+                                
+                                if parsed_date > today:
+                                    continue
+                                
+                                if parsed_date < today - timedelta(days=1095):
+                                    continue
+                                
+                                data['date'] = parsed_date
+                                data['confidence'] += 0.25
+                                date_found = True
+                                print(f"      ✅ DATE: {parsed_date}")
+                                break
+                            except ValueError:
+                                continue
+                        
+                        if date_found:
+                            break
+                            
+                    except Exception:
+                        continue
+                
+                if date_found:
+                    break
     
-    # Final fallback: search first 10 lines for simple patterns
+    # Strategy 3: Fallback search in first 10 lines
     if not date_found:
-        print(f"   🔄 Fallback: searching first 10 lines...")
+        print(f"   🔄 Fallback: first 10 lines...")
         
         for i, line in enumerate(lines[:10]):
-            if any(x in line.lower() for x in ['total', 'amount', 'price', 'qty', 'quantity']):
+            if any(x in line.lower() for x in ['total', 'amount', 'price', 'qty']):
                 continue
             
-            simple_patterns = [
-                (r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})', ['%m/%d/%Y', '%d/%m/%Y']),
-                (r'(\d{1,2})\s+(\d{1,2})\s+(\d{4})', ['%m/%d/%Y', '%d/%m/%Y']),
-            ]
-            
-            for pattern, formats in simple_patterns:
-                match = re.search(pattern, line)
+            for pattern, extractor, formats, pattern_name in date_patterns[:3]:  # Try top 3 patterns
+                match = re.search(pattern, line, re.IGNORECASE)
                 if match:
-                    date_str = match.group(0).replace(' ', '/').replace('-', '/')
-                    for fmt in formats:
-                        try:
-                            parsed_date = datetime.strptime(date_str, fmt).date()
-                            if today - timedelta(days=1095) <= parsed_date <= today:
-                                data['date'] = parsed_date
-                                data['confidence'] += 0.15
-                                date_found = True
-                                print(f"   ✅ FALLBACK: {parsed_date} from line {i}")
-                                break
-                        except:
-                            continue
+                    try:
+                        date_str = extractor(match)
+                        for fmt in formats:
+                            try:
+                                parsed_date = datetime.strptime(date_str, fmt).date()
+                                if today - timedelta(days=1095) <= parsed_date <= today:
+                                    data['date'] = parsed_date
+                                    data['confidence'] += 0.15
+                                    date_found = True
+                                    print(f"      ✅ Fallback: {parsed_date} (line {i})")
+                                    break
+                            except:
+                                continue
+                        if date_found:
+                            break
+                    except:
+                        continue
                 if date_found:
                     break
             if date_found:
@@ -521,7 +540,7 @@ def _smart_extract(text, user):
     
     if not date_found:
         data['date'] = today
-        print(f"   ⚠️ No date found, using today: {today}")
+        print(f"   ⚠️ Using today: {today}")
 
     # EXTRACT MERCHANT with enhanced detection
     known_merchants = [
